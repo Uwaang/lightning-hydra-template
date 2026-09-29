@@ -6,3 +6,15 @@ enforce_tags: True
 
 # pretty print config tree at the start of the run using Rich library
 print_config: True
+
+# save pip/git/GPU metadata and snapshots of src/ and configs/
+log_metadata: False
+
+# plain PyTorch state-dict export
+state_dict:
+  strip_prefix: "net."
+  exclude_prefixes: []
+
+# prediction export
+predictions:
+  output_format: "json"
