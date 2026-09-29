@@ -32,7 +32,7 @@ class BaseImageDataset(Dataset[dict[str, Any]]):
             image_source: Any = source if isinstance(source, Path) else io.BytesIO(source)
             with Image.open(image_source) as image:
                 mode = "L" if self.grayscale else "RGB"
-                array = np.asarray(image.convert(mode))
+                array = np.array(image.convert(mode), copy=True)
         elif self.read_backend == "opencv":
             import cv2
 
@@ -150,7 +150,12 @@ class UnlabeledImageDataset(BaseImageDataset):
         if paths:
             collected.extend(root / path for path in paths)
         if directories:
-            collected.extend(discover_image_paths(directories, recursive=recursive))
+            collected.extend(
+                discover_image_paths(
+                    [root / directory for directory in directories],
+                    recursive=recursive,
+                )
+            )
         if manifest_path:
             collected.extend(root / str(item["path"]) for item in load_manifest(manifest_path))
 
