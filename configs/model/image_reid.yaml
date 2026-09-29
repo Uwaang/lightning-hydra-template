@@ -1,0 +1,41 @@
+_target_: src.models.reid_module.ReIdentificationLitModule
+
+num_classes: 1000
+
+optimizer:
+  _target_: torch.optim.AdamW
+  _partial_: true
+  lr: 0.0003
+  weight_decay: 0.00001
+
+scheduler:
+  _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+  _partial_: true
+  mode: min
+  factor: 0.3
+  patience: 5
+
+loss:
+  _target_: src.models.losses.AngularMarginSoftmaxLoss
+  embedding_size: 128
+  num_classes: ${model.num_classes}
+  loss_type: cosface
+  scale: null
+  margin: null
+
+net:
+  _target_: src.models.components.reid.EmbeddingModel
+  in_features: 512
+  embedding_dim: 128
+  normalize: True
+  backbone:
+    _target_: src.models.components.reid.TorchvisionFeatureMapBackbone
+    model_name: resnet18
+    return_node: layer4
+    weights: null
+  pool:
+    _target_: src.models.components.reid.GeM
+    p: 3.0
+    trainable: False
+
+compile: false
