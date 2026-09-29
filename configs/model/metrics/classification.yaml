@@ -1,0 +1,8 @@
+main:
+  _target_: torchmetrics.classification.MulticlassAccuracy
+  num_classes: 10
+
+additional:
+  auroc:
+    _target_: torchmetrics.classification.MulticlassAUROC
+    num_classes: 10
