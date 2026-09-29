@@ -67,7 +67,13 @@ def write_hdf5_images(
 
     with h5py.File(output_path, mode="w") as handle:
         for key, path in image_paths:
+            normalized = key.replace("\\", "/").lstrip("/")
+            if not normalized:
+                raise ValueError("HDF5 image keys must not be empty.")
+
+            parent, _, dataset_name = normalized.rpartition("/")
+            group = handle.require_group(parent) if parent else handle
             encoded = np.fromfile(path, dtype=np.uint8)
-            handle.create_dataset(key.replace("\\", "/").lstrip("/"), data=encoded)
+            group.create_dataset(dataset_name, data=encoded)
 
     return output_path
