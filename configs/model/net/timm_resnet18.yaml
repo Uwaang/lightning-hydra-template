@@ -1,0 +1,4 @@
+_target_: src.models.components.adapters.TimmClassifier
+model_name: resnet18
+num_classes: 10
+pretrained: False
