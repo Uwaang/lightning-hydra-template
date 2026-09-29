@@ -1,0 +1,6 @@
+_target_: src.models.losses.AngularMarginSoftmaxLoss
+embedding_size: 128
+num_classes: 1000
+loss_type: cosface
+scale: null
+margin: null

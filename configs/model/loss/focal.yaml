@@ -1,0 +1,5 @@
+_target_: src.models.losses.FocalLoss
+alpha: 1.0
+gamma: 2.0
+reduction: mean
+ignore_index: -100
