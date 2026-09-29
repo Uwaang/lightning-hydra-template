@@ -2,9 +2,9 @@ name: Tests
 
 on:
   push:
-    branches: [main, "integration/**"]
+    branches: [main, "integration/**", "feature/**"]
   pull_request:
-    branches: [main, "release/*", "dev"]
+    branches: [main, "integration/**", "release/*", "dev"]
 
 permissions:
   contents: read
@@ -52,6 +52,32 @@ jobs:
 
       - name: Run pytest
         run: python -m pytest -v
+
+  vision-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements/vision.txt
+
+      - name: Install vision dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements/vision.txt
+          python -m pip install -e .
+
+      - name: Run image data tests
+        run: python -m pytest tests/test_image_data.py -v
 
   code-coverage:
     runs-on: ubuntu-latest
