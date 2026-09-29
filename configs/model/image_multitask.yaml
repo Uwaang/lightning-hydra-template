@@ -1,0 +1,32 @@
+_target_: src.models.multitask_module.MultiHeadClassificationLitModule
+
+heads:
+  label_a: 3
+  label_b: 2
+
+optimizer:
+  _target_: torch.optim.AdamW
+  _partial_: true
+  lr: 0.0003
+  weight_decay: 0.01
+
+scheduler:
+  _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+  _partial_: true
+  mode: min
+  factor: 0.5
+  patience: 3
+
+loss:
+  _target_: torch.nn.CrossEntropyLoss
+
+net:
+  _target_: src.models.components.multihead.MultiHeadClassifier
+  heads: ${model.heads}
+  dropout: 0.0
+  backbone:
+    _target_: src.models.components.adapters.TorchvisionBackbone
+    model_name: resnet18
+    weights: null
+
+compile: false
