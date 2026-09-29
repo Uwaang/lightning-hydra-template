@@ -1,0 +1,4 @@
+-r ../requirements.txt
+
+timm>=1.0.30,<2
+segmentation-models-pytorch>=0.5,<0.6

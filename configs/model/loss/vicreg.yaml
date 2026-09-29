@@ -1,0 +1,5 @@
+_target_: src.models.losses.VICRegLoss
+invariance_weight: 25.0
+variance_weight: 25.0
+covariance_weight: 1.0
+eps: 0.0001

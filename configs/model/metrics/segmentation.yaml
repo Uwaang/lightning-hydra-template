@@ -1,0 +1,3 @@
+main:
+  _target_: torchmetrics.classification.MulticlassJaccardIndex
+  num_classes: 2
