@@ -1,0 +1,12 @@
+# @package _global_
+
+defaults:
+  - override /data: image_classification
+  - override /model: image_classification
+  - override /trainer: default
+
+tags: ["image-classification"]
+seed: 42
+
+trainer:
+  max_epochs: 10
