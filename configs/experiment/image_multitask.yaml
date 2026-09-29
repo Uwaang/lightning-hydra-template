@@ -1,0 +1,12 @@
+# @package _global_
+
+defaults:
+  - override /data: image_multitask
+  - override /model: image_multitask
+  - override /trainer: default
+
+tags: ["image-multitask"]
+seed: 42
+
+trainer:
+  max_epochs: 10
