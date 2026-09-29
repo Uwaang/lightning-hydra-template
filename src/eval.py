@@ -29,6 +29,8 @@ from src.utils import (
     extras,
     instantiate_loggers,
     log_hyperparameters,
+    log_run_metadata,
+    save_predictions,
     task_wrapper,
 )
 
@@ -71,11 +73,25 @@ def evaluate(cfg: DictConfig) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         log.info("Logging hyperparameters!")
         log_hyperparameters(object_dict)
 
-    log.info("Starting testing!")
-    trainer.test(model=model, datamodule=datamodule, ckpt_path=cfg.ckpt_path)
+    if cfg.get("extras") and cfg.extras.get("log_metadata"):
+        log_run_metadata(cfg)
 
-    # for predictions use trainer.predict(...)
-    # predictions = trainer.predict(model=model, dataloaders=dataloaders, ckpt_path=cfg.ckpt_path)
+    if cfg.get("predict"):
+        log.info("Starting prediction!")
+        predictions = trainer.predict(
+            model=model,
+            datamodule=datamodule,
+            ckpt_path=cfg.ckpt_path,
+        )
+        prediction_cfg = cfg.extras.get("predictions", {})
+        save_predictions(
+            predictions=predictions,
+            dirname=cfg.paths.output_dir,
+            output_format=prediction_cfg.get("output_format", "json"),
+        )
+    else:
+        log.info("Starting testing!")
+        trainer.test(model=model, datamodule=datamodule, ckpt_path=cfg.ckpt_path)
 
     metric_dict = trainer.callback_metrics
 
