@@ -3,6 +3,10 @@
 import argparse
 from pathlib import Path
 
+import rootutils
+
+rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
+
 from src.data.components.hdf5 import write_hdf5_images
 from src.data.components.paths import load_manifest
 
