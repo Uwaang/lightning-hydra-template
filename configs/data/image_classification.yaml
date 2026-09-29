@@ -1,4 +1,5 @@
 _target_: src.data.image_datamodule.ImageDataModule
+_recursive_: False
 
 datasets:
   train:
