@@ -1,0 +1,27 @@
+_target_: src.models.classification_module.ClassificationLitModule
+
+num_classes: 2
+
+optimizer:
+  _target_: torch.optim.AdamW
+  _partial_: true
+  lr: 0.0003
+  weight_decay: 0.01
+
+scheduler:
+  _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+  _partial_: true
+  mode: min
+  factor: 0.5
+  patience: 3
+
+loss:
+  _target_: torch.nn.CrossEntropyLoss
+
+net:
+  _target_: src.models.components.adapters.TorchvisionClassifier
+  model_name: resnet18
+  num_classes: ${model.num_classes}
+  weights: null
+
+compile: false
