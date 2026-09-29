@@ -1,0 +1,31 @@
+_target_: src.models.vicreg_module.VICRegLitModule
+
+optimizer:
+  _target_: torch.optim.AdamW
+  _partial_: true
+  lr: 0.0003
+  weight_decay: 0.000001
+
+scheduler:
+  _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+  _partial_: true
+  mode: min
+  factor: 0.5
+  patience: 5
+
+loss:
+  _target_: src.models.losses.VICRegLoss
+  invariance_weight: 25.0
+  variance_weight: 25.0
+  covariance_weight: 1.0
+  eps: 0.0001
+
+net:
+  _target_: src.models.components.adapters.TorchvisionBackbone
+  model_name: resnet18
+  weights: null
+
+feature_dim: null
+projector_hidden_dim: 2048
+projector_output_dim: 512
+compile: false
