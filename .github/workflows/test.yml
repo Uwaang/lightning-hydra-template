@@ -3,12 +3,15 @@ name: Tests
 on:
   workflow_dispatch:
   push:
-    branches: [main, "integration/**", "feature/**"]
+    branches: [main, "integration/**", "feature/**", "modernize/**"]
   pull_request:
     branches: [main, "integration/**", "release/*", "dev"]
 
 permissions:
   contents: read
+
+env:
+  UV_FROZEN: "1"
 
 jobs:
   tests:
@@ -35,24 +38,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v7
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
-          python-version: ${{ matrix.python-version }}
-          cache: pip
-          cache-dependency-path: requirements.txt
+          enable-cache: true
 
-      - name: Install dependencies
+      - name: Install Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Sync locked environment
+        run: uv sync --python ${{ matrix.python-version }}
+
+      - name: Show environment
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
-          python -m pip install -e .
-
-      - name: List dependencies
-        run: python -m pip list
+          uv --version
+          uv run python --version
+          uv run python -c "import torch; print(torch.__version__)"
 
       - name: Run core tests
-        run: python -m pytest -m "not slow" -v
+        run: uv run python -m pytest -m "not slow" -v
 
   vision-tests:
     runs-on: ubuntu-latest
@@ -62,27 +66,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v7
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
-          python-version: "3.12"
-          cache: pip
-          cache-dependency-path: |
-            requirements.txt
-            requirements/vision.txt
+          enable-cache: true
 
-      - name: Install CPU PyTorch
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install --index-url https://download.pytorch.org/whl/cpu "torch>=2.14,<2.15" "torchvision>=0.29,<0.30"
+      - name: Install Python
+        run: uv python install 3.12
 
-      - name: Install vision dependencies
-        run: |
-          python -m pip install -r requirements/vision.txt
-          python -m pip install -e .
+      - name: Sync vision environment
+        run: uv sync --python 3.12 --extra vision
 
       - name: Run image data tests
-        run: python -m pytest tests/test_image_data.py -v
+        run: uv run python -m pytest tests/test_image_data.py -v
 
   full-stack-tests:
     runs-on: ubuntu-latest
@@ -92,31 +88,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v7
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
-          python-version: "3.12"
-          cache: pip
-          cache-dependency-path: |
-            requirements.txt
-            requirements/*.txt
+          enable-cache: true
 
-      - name: Install CPU PyTorch
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install --index-url https://download.pytorch.org/whl/cpu "torch>=2.14,<2.15" "torchvision>=0.29,<0.30"
+      - name: Install Python
+        run: uv python install 3.12
 
-      - name: Install full dependency set
-        run: |
-          python -m pip install -r requirements/all.txt
-          python -m pip install -e .
+      - name: Sync full environment
+        run: uv sync --python 3.12 --all-extras
 
       - name: Run non-slow full suite
-        run: python -m pytest -m "not slow" -v
+        run: uv run python -m pytest -m "not slow" -v
 
       - name: Run integration smoke tests
         run: |
-          python -m pytest             tests/test_sweeps.py::test_example_experiment             tests/test_sweeps.py::test_hydra_sweep             tests/test_sweeps.py::test_optuna_sweep             -v
+          uv run python -m pytest tests/test_sweeps.py::test_example_experiment tests/test_sweeps.py::test_hydra_sweep tests/test_sweeps.py::test_optuna_sweep -v
 
   code-coverage:
     runs-on: ubuntu-latest
@@ -126,22 +114,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v7
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
-          python-version: "3.12"
-          cache: pip
-          cache-dependency-path: requirements.txt
+          enable-cache: true
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
-          python -m pip install -e .
-          python -m pip install pytest-cov
+      - name: Install Python
+        run: uv python install 3.12
+
+      - name: Sync locked environment
+        run: uv sync --python 3.12
 
       - name: Run tests and collect coverage
-        run: python -m pytest -m "not slow" --cov=src --cov-report=xml
+        run: uv run python -m pytest -m "not slow" --cov=src --cov-report=xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7
