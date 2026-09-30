@@ -4,6 +4,7 @@ FROM ${PYTORCH_IMAGE}
 ARG USER_NAME=app
 ARG USER_ID=1000
 ARG GROUP_ID=1000
+ARG INSTALL_OPTIONAL=true
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
@@ -21,8 +22,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /workspace
 
 COPY requirements.txt setup.py ./
+COPY requirements ./requirements
 RUN python -m pip install --upgrade pip \
-    && python -m pip install -r requirements.txt
+    && python -m pip install -r requirements.txt \
+    && if [ "${INSTALL_OPTIONAL}" = "true" ]; then \
+         python -m pip install -r requirements/all.txt; \
+       fi
 
 RUN groupadd --gid "${GROUP_ID}" "${USER_NAME}" \
     && useradd --uid "${USER_ID}" --gid "${GROUP_ID}" --create-home "${USER_NAME}"
