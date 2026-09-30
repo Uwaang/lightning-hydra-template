@@ -70,14 +70,48 @@ jobs:
             requirements.txt
             requirements/vision.txt
 
-      - name: Install vision dependencies
+      - name: Install CPU PyTorch
         run: |
           python -m pip install --upgrade pip
+          python -m pip install --index-url https://download.pytorch.org/whl/cpu "torch>=2.14,<2.15" "torchvision>=0.29,<0.30"
+
+      - name: Install vision dependencies
+        run: |
           python -m pip install -r requirements/vision.txt
           python -m pip install -e .
 
       - name: Run image data tests
         run: python -m pytest tests/test_image_data.py -v
+
+  full-stack-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements/*.txt
+
+      - name: Install CPU PyTorch
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --index-url https://download.pytorch.org/whl/cpu "torch>=2.14,<2.15" "torchvision>=0.29,<0.30"
+
+      - name: Install full dependency set
+        run: |
+          python -m pip install -r requirements/all.txt
+          python -m pip install -e .
+
+      - name: Run full test suite
+        run: python -m pytest -v
 
   code-coverage:
     runs-on: ubuntu-latest
