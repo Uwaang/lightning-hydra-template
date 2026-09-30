@@ -11,7 +11,7 @@ import numpy as np
 class HDF5ImageStore:
     """Process-aware lazy HDF5 reader suitable for DataLoader workers."""
 
-    def __init__(self, path: str | Path, swmr: bool = True) -> None:
+    def __init__(self, path: str | Path, swmr: bool = False) -> None:
         self.path = Path(path)
         self.swmr = swmr
         self._handle: h5py.File | None = None
@@ -65,7 +65,7 @@ def write_hdf5_images(
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with h5py.File(output_path, mode="w") as handle:
+    with h5py.File(output_path, mode="w", libver="latest") as handle:
         for key, path in image_paths:
             normalized = key.replace("\\", "/").lstrip("/")
             if not normalized:
