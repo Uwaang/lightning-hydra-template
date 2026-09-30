@@ -408,6 +408,14 @@ python train.py -m data.batch_size=32,64,128 model.lr=0.001,0.0005
 <details>
 <summary><b>Create a sweep over hyperparameters with Optuna</b></summary>
 
+Install the optional modern Optuna sweeper once:
+
+```bash
+python -m pip install -r requirements/sweeps.txt
+```
+
+Then run the configured search:
+
 ```bash
 # this will run hyperparameter search defined in `configs/hparams_search/mnist_optuna.yaml`
 # over chosen experiment config
@@ -807,6 +815,14 @@ There is also `@RunIf` decorator implemented, that allows you to run tests only 
 <br>
 
 ## Hyperparameter Search
+
+Optuna sweeping is an optional dependency in this fork so the core environment
+is not tied to the legacy Optuna 2.x plugin stack. Install the maintained sweep
+environment before using the Optuna config:
+
+```bash
+python -m pip install -r requirements/sweeps.txt
+```
 
 You can define hyperparameter search by adding new config file to [configs/hparams_search](configs/hparams_search).
 
