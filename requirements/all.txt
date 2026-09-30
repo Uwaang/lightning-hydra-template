@@ -2,3 +2,4 @@
 -r vision.txt
 -r model-zoo.txt
 -r interpretability.txt
+-r sweeps.txt

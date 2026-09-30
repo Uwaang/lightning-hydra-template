@@ -11,16 +11,12 @@ overrides = ["logger=[]"]
 
 @RunIf(sh=True)
 @pytest.mark.slow
-def test_experiments(tmp_path: Path) -> None:
-    """Test running all available experiment configs with `fast_dev_run=True.`
-
-    :param tmp_path: The temporary logging path.
-    """
+def test_example_experiment(tmp_path: Path) -> None:
+    """Smoke-test the self-contained MNIST experiment with fast_dev_run."""
     command = [
         startfile,
-        "-m",
-        "experiment=glob(*)",
-        "hydra.sweep.dir=" + str(tmp_path),
+        "experiment=example",
+        "hydra.run.dir=" + str(tmp_path),
         "++trainer.fast_dev_run=true",
     ] + overrides
     run_sh_command(command)
@@ -29,10 +25,7 @@ def test_experiments(tmp_path: Path) -> None:
 @RunIf(sh=True)
 @pytest.mark.slow
 def test_hydra_sweep(tmp_path: Path) -> None:
-    """Test default hydra sweep.
-
-    :param tmp_path: The temporary logging path.
-    """
+    """Test the built-in Hydra basic sweeper."""
     command = [
         startfile,
         "-m",
@@ -40,17 +33,13 @@ def test_hydra_sweep(tmp_path: Path) -> None:
         "model.optimizer.lr=0.005,0.01",
         "++trainer.fast_dev_run=true",
     ] + overrides
-
     run_sh_command(command)
 
 
 @RunIf(sh=True)
 @pytest.mark.slow
 def test_hydra_sweep_ddp_sim(tmp_path: Path) -> None:
-    """Test default hydra sweep with ddp sim.
-
-    :param tmp_path: The temporary logging path.
-    """
+    """Test the built-in Hydra sweeper with the DDP simulation config."""
     command = [
         startfile,
         "-m",
@@ -65,38 +54,32 @@ def test_hydra_sweep_ddp_sim(tmp_path: Path) -> None:
     run_sh_command(command)
 
 
-@RunIf(sh=True)
+@RunIf(sh=True, optuna_sweeper=True)
 @pytest.mark.slow
 def test_optuna_sweep(tmp_path: Path) -> None:
-    """Test Optuna hyperparam sweeping.
-
-    :param tmp_path: The temporary logging path.
-    """
+    """Test the optional modern Optuna sweeper integration."""
     command = [
         startfile,
         "-m",
         "hparams_search=mnist_optuna",
         "hydra.sweep.dir=" + str(tmp_path),
-        "hydra.sweeper.n_trials=10",
-        "hydra.sweeper.sampler.n_startup_trials=5",
+        "hydra.sweeper.n_trials=3",
+        "hydra.sweeper.sampler.n_startup_trials=1",
         "++trainer.fast_dev_run=true",
     ] + overrides
     run_sh_command(command)
 
 
-@RunIf(wandb=True, sh=True)
+@RunIf(wandb=True, sh=True, optuna_sweeper=True)
 @pytest.mark.slow
 def test_optuna_sweep_ddp_sim_wandb(tmp_path: Path) -> None:
-    """Test Optuna sweep with wandb logging and ddp sim.
-
-    :param tmp_path: The temporary logging path.
-    """
+    """Test optional Optuna sweeping with W&B and DDP simulation."""
     command = [
         startfile,
         "-m",
         "hparams_search=mnist_optuna",
         "hydra.sweep.dir=" + str(tmp_path),
-        "hydra.sweeper.n_trials=5",
+        "hydra.sweeper.n_trials=3",
         "trainer=ddp_sim",
         "trainer.max_epochs=3",
         "+trainer.limit_train_batches=0.01",

@@ -4,8 +4,18 @@ import os
 from pathlib import Path
 from typing import Any
 
-import h5py
 import numpy as np
+
+
+def _import_h5py() -> Any:
+    try:
+        import h5py
+    except ImportError as exc:
+        raise ImportError(
+            "HDF5 support requires the optional vision dependencies. "
+            "Install them with 'pip install -r requirements/vision.txt'."
+        ) from exc
+    return h5py
 
 
 class HDF5ImageStore:
@@ -14,10 +24,10 @@ class HDF5ImageStore:
     def __init__(self, path: str | Path, swmr: bool = False) -> None:
         self.path = Path(path)
         self.swmr = swmr
-        self._handle: h5py.File | None = None
+        self._handle: Any | None = None
         self._pid: int | None = None
 
-    def _ensure_open(self) -> h5py.File:
+    def _ensure_open(self) -> Any:
         current_pid = os.getpid()
         if self._handle is not None and self._pid == current_pid:
             return self._handle
@@ -26,6 +36,7 @@ class HDF5ImageStore:
         if not self.path.is_file():
             raise FileNotFoundError(self.path)
 
+        h5py = _import_h5py()
         self._handle = h5py.File(self.path, mode="r", swmr=self.swmr)
         self._pid = current_pid
         return self._handle
@@ -62,6 +73,7 @@ def write_hdf5_images(
     image_paths: list[tuple[str, Path]],
 ) -> Path:
     """Write encoded image bytes to an HDF5 file using relative paths as keys."""
+    h5py = _import_h5py()
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 

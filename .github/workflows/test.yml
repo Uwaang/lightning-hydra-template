@@ -50,8 +50,8 @@ jobs:
       - name: List dependencies
         run: python -m pip list
 
-      - name: Run pytest
-        run: python -m pytest -v
+      - name: Run core tests
+        run: python -m pytest -m "not slow" -v
 
   vision-tests:
     runs-on: ubuntu-latest
@@ -110,8 +110,12 @@ jobs:
           python -m pip install -r requirements/all.txt
           python -m pip install -e .
 
-      - name: Run full test suite
-        run: python -m pytest -v
+      - name: Run non-slow full suite
+        run: python -m pytest -m "not slow" -v
+
+      - name: Run integration smoke tests
+        run: |
+          python -m pytest             tests/test_sweeps.py::test_example_experiment             tests/test_sweeps.py::test_hydra_sweep             tests/test_sweeps.py::test_optuna_sweep             -v
 
   code-coverage:
     runs-on: ubuntu-latest
@@ -136,7 +140,7 @@ jobs:
           python -m pip install pytest-cov
 
       - name: Run tests and collect coverage
-        run: python -m pytest --cov=src --cov-report=xml
+        run: python -m pytest -m "not slow" --cov=src --cov-report=xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7

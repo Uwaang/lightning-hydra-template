@@ -1,20 +1,16 @@
 import platform
+from importlib.metadata import PackageNotFoundError, version
 
-import pkg_resources
 from lightning.fabric.accelerators import TPUAccelerator
 
 
 def _package_available(package_name: str) -> bool:
-    """Check if a package is available in your environment.
-
-    :param package_name: The name of the package to be checked.
-
-    :return: `True` if the package is available. `False` otherwise.
-    """
+    """Check whether an installed distribution is available."""
     try:
-        return pkg_resources.require(package_name) is not None
-    except pkg_resources.DistributionNotFound:
+        version(package_name)
+    except PackageNotFoundError:
         return False
+    return True
 
 
 _TPU_AVAILABLE = TPUAccelerator.is_available()
@@ -30,3 +26,4 @@ _WANDB_AVAILABLE = _package_available("wandb")
 _NEPTUNE_AVAILABLE = _package_available("neptune")
 _COMET_AVAILABLE = _package_available("comet_ml")
 _MLFLOW_AVAILABLE = _package_available("mlflow")
+_OPTUNA_SWEEPER_AVAILABLE = _package_available("hydra-optuna-sweeper")
