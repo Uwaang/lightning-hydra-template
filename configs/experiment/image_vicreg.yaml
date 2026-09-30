@@ -10,3 +10,12 @@ seed: 42
 
 trainer:
   max_epochs: 100
+
+# VICReg does not produce a classification accuracy metric during pretraining.
+callbacks:
+  model_checkpoint:
+    monitor: "val/loss"
+    mode: "min"
+  early_stopping:
+    monitor: "val/loss"
+    mode: "min"
