@@ -14,8 +14,19 @@ encoded image
   -> augmentation #2 -> view2
 ```
 
-This avoids performing duplicate image I/O while preserving independent random
-views.
+This avoids duplicate image I/O while preserving independent random views.
+Training manifests may be genuinely unlabeled: use the list form with only a
+`path` field. If a `label` is present, the dataset preserves it for downstream
+analysis but VICReg itself does not require it.
+
+Example unlabeled manifest:
+
+```json
+[
+  {"path": "images/0001.jpg"},
+  {"path": "images/0002.jpg"}
+]
+```
 
 ## Model flow
 
