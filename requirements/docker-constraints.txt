@@ -1,0 +1,4 @@
+# The PyTorch 2.14 CUDA runtime image ships spin 0.18, which requires click<8.4.
+# Keep the optional model-zoo stack on the latest compatible Hugging Face Hub
+# 0.x line inside Docker without constraining ordinary non-Docker installs.
+huggingface-hub>=0.36,<1
