@@ -68,8 +68,7 @@ class MultiTaskImageDataModule(ImageDataModule):
 
     def train_dataloader(self) -> CombinedLoader:
         loaders = {
-            name: self._loader("train", dataset)
-            for name, dataset in self.train_tasks.items()
+            name: self._loader("train", dataset) for name, dataset in self.train_tasks.items()
         }
         return CombinedLoader(loaders, mode=self.train_mode)
 
@@ -80,7 +79,4 @@ class MultiTaskImageDataModule(ImageDataModule):
         return [self._loader("test", self.test_tasks[name]) for name in self.task_names]
 
     def predict_dataloader(self) -> list[DataLoader[Any]]:
-        return [
-            self._loader("predict", dataset)
-            for dataset in self.predict_tasks.values()
-        ]
+        return [self._loader("predict", dataset) for dataset in self.predict_tasks.values()]

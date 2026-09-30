@@ -119,8 +119,7 @@ def _slice_batch_value(value: Any, index: int, batch_size: int) -> Any:
         return _to_python(value)
     if isinstance(value, Mapping):
         return {
-            str(key): _slice_batch_value(item, index, batch_size)
-            for key, item in value.items()
+            str(key): _slice_batch_value(item, index, batch_size) for key, item in value.items()
         }
     if isinstance(value, (list, tuple)):
         if len(value) == batch_size:

@@ -14,8 +14,8 @@ from src.data.image_dataset import BaseImageDataset
 class TwoViewImageDataset(BaseImageDataset):
     """Image dataset that returns two independent augmented views.
 
-    Labels are optional. This keeps VICReg usable with genuinely unlabeled
-    pretraining manifests while preserving labels when they are available.
+    Labels are optional. This keeps VICReg usable with genuinely unlabeled pretraining manifests
+    while preserving labels when they are available.
     """
 
     def __init__(

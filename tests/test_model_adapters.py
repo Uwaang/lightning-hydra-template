@@ -1,10 +1,7 @@
 import pytest
 import torch
 
-from src.models.components.adapters import (
-    TorchvisionBackbone,
-    TorchvisionClassifier,
-)
+from src.models.components.adapters import TorchvisionBackbone, TorchvisionClassifier
 
 
 def test_torchvision_classifier() -> None:

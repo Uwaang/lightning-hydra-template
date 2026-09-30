@@ -19,9 +19,7 @@ def resolve_module(root: nn.Module, path: str) -> nn.Module:
             try:
                 candidate = module[int(token)]
             except (IndexError, KeyError, TypeError) as exc:
-                raise KeyError(
-                    f"Unable to resolve module path '{path}' at '{token}'."
-                ) from exc
+                raise KeyError(f"Unable to resolve module path '{path}' at '{token}'.") from exc
             if not isinstance(candidate, nn.Module):
                 raise TypeError(f"Resolved object at '{token}' is not a torch module.")
             module = candidate

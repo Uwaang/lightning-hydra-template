@@ -4,7 +4,6 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-
 _DEFAULTS = {
     "arcface": (64.0, 0.5),
     "sphereface": (64.0, 1.35),

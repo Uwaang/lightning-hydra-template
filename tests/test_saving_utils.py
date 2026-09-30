@@ -4,7 +4,11 @@ from pathlib import Path
 
 import torch
 
-from src.utils.saving_utils import _load_checkpoint_state_dict, process_state_dict, save_predictions
+from src.utils.saving_utils import (
+    _load_checkpoint_state_dict,
+    process_state_dict,
+    save_predictions,
+)
 
 
 def test_process_state_dict() -> None:

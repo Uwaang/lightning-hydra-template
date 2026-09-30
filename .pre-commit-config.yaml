@@ -114,6 +114,7 @@ repos:
     hooks:
       - id: mdformat
         args: ["--number"]
+        exclude: "INTEGRATION_PLAN.md"
         additional_dependencies:
           - mdformat-gfm
           - mdformat-tables
@@ -138,7 +139,7 @@ repos:
 
   # jupyter notebook linting
   - repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.6.3
+    rev: 1.9.1
     hooks:
       - id: nbqa-black
         args: ["--line-length=99"]

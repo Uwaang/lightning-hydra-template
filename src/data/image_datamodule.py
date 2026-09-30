@@ -62,8 +62,7 @@ class ImageDataModule(LightningDataModule):
                 self.data_predict = self._dataset("predict", predict_cfg)
             else:
                 self.data_predict = [
-                    self._dataset("predict", dataset_cfg)
-                    for dataset_cfg in predict_cfg.values()
+                    self._dataset("predict", dataset_cfg) for dataset_cfg in predict_cfg.values()
                 ]
 
     def _loader(self, stage: str, dataset: Dataset[Any]) -> DataLoader[Any]:

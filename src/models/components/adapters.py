@@ -6,7 +6,6 @@ import torch
 from torch import nn
 from torchvision import models as tv_models
 
-
 _HEAD_ATTRIBUTES = ("fc", "classifier", "heads", "head")
 
 

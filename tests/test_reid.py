@@ -3,7 +3,11 @@ from functools import partial
 import torch
 from torch import nn
 
-from src.models.components.reid import EmbeddingModel, GeM, TorchvisionFeatureMapBackbone
+from src.models.components.reid import (
+    EmbeddingModel,
+    GeM,
+    TorchvisionFeatureMapBackbone,
+)
 from src.models.losses import AngularMarginSoftmaxLoss
 from src.models.reid_module import ReIdentificationLitModule
 

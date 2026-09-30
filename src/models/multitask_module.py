@@ -178,8 +178,7 @@ class MultiHeadClassificationLitModule(LightningModule):
         result: dict[str, Any] = {
             "logits": logits,
             "preds": {
-                head: torch.argmax(head_logits, dim=1)
-                for head, head_logits in logits.items()
+                head: torch.argmax(head_logits, dim=1) for head, head_logits in logits.items()
             },
         }
         if "label" in batch:
