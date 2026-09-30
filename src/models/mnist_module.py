@@ -173,6 +173,18 @@ class MNISTLitModule(LightningModule):
         self.log("test/loss", self.test_loss, on_step=False, on_epoch=True, prog_bar=True)
         self.log("test/acc", self.test_acc, on_step=False, on_epoch=True, prog_bar=True)
 
+    def predict_step(
+        self,
+        batch: Tuple[torch.Tensor, torch.Tensor],
+        batch_idx: int,
+        dataloader_idx: int = 0,
+    ) -> Dict[str, torch.Tensor]:
+        """Return logits, class predictions, and targets for prediction export."""
+        x, y = batch
+        logits = self.forward(x)
+        preds = torch.argmax(logits, dim=1)
+        return {"logits": logits, "preds": preds, "targets": y}
+
     def on_test_epoch_end(self) -> None:
         """Lightning hook that is called when a test epoch ends."""
         pass

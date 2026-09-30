@@ -28,3 +28,9 @@ test-full: ## Run all tests
 
 train: ## Train the model
 	python src/train.py
+
+docker-build: ## Build the CUDA development image
+	docker build -t lightning-hydra:dev .
+
+docker-train: ## Train in Docker with all NVIDIA GPUs
+	docker run --rm --gpus all --ipc=host -v "$(PWD)/data:/workspace/data" -v "$(PWD)/logs:/workspace/logs" lightning-hydra:dev python src/train.py trainer=gpu

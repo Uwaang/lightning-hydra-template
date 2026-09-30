@@ -1,0 +1,12 @@
+# @package _global_
+
+defaults:
+  - override /data: image_vicreg
+  - override /model: image_vicreg
+  - override /trainer: default
+
+tags: ["image-vicreg", "self-supervised"]
+seed: 42
+
+trainer:
+  max_epochs: 100
