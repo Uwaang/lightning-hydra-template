@@ -53,10 +53,20 @@ Dependency-free validation on an isolated clone:
 - Shell scripts pass `bash -n`.
 - Every non-deleted file contributed by the ten modular feature branches is present in the full-stack tree.
 
-Individual implementation paths were also exercised during development,
-including torchvision head replacement, custom-loss backward passes, HDF5
-nested keys, Lightning `CombinedLoader`, ReID embedding normalization,
-VICReg projector gradients, and Grad-CAM target-module resolution.
+Individual implementation paths were also exercised during development.
+A separate isolated sandbox with PyTorch 2.10 CPU, torchvision 0.25,
+Lightning 2.6.5, and TorchMetrics 1.9 successfully ran:
+
+- a real Lightning `Trainer.fit(fast_dev_run=True)` with the integrated
+  multi-task `CombinedLoader(max_size_cycle)` pattern;
+- angular-margin and VICReg backward passes;
+- ResNet-18, MobileNetV3-Small, and ViT-B/16 classifier-head replacement;
+- ResNet-18 `layer4 -> GeM -> projection -> L2 normalization` for ReID;
+- nested HDF5 image-byte roundtrip; and
+- per-sample splitting of nested multi-head prediction outputs.
+
+The exact target PyTorch 2.14 / torchvision 0.29 environment still requires
+the full dependency-install test gate below.
 
 ## Remaining merge gates
 
