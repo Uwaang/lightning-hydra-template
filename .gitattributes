@@ -2,6 +2,7 @@
 *.yml linguist-language=YAML
 *.yaml linguist-detectable=true
 *.yaml linguist-language=YAML
+*.sh text eol=lf
 
 # Keep large generated model/data artifacts in LFS without capturing ordinary
 # JSON manifests or configuration files.
