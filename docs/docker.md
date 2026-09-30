@@ -1,8 +1,7 @@
 # Docker
 
-The Docker image is intended to provide a reproducible CUDA development and
-training environment without copying the older CUDA 11.7 setup from the
-reference project.
+The Docker image provides a reproducible CUDA development and training
+environment for the integrated template.
 
 ## Base image
 
@@ -12,7 +11,7 @@ The default base image is:
 pytorch/pytorch:2.14.0-cuda13.0-cudnn9-runtime
 ```
 
-Override it at build time if another supported PyTorch image is required:
+Override it when another supported PyTorch image is required:
 
 ```bash
 docker build \
@@ -20,14 +19,25 @@ docker build \
   -t lightning-hydra:dev .
 ```
 
-## Build
+## Full-stack build
+
+The default image installs the core requirements plus the optional vision,
+model-zoo, HDF5, and Grad-CAM dependencies from `requirements/all.txt`.
 
 ```bash
 docker build -t lightning-hydra:dev .
 ```
 
+For a smaller MNIST/core-only image:
+
+```bash
+docker build \
+  --build-arg INSTALL_OPTIONAL=false \
+  -t lightning-hydra:core .
+```
+
 The container runs as an unprivileged `app` user by default. On Linux, pass
-your host UID/GID when you want bind-mounted files to retain host ownership:
+your host UID/GID when bind-mounted files should retain host ownership:
 
 ```bash
 docker build \
@@ -55,7 +65,7 @@ docker run --rm --gpus all --ipc=host \
   -v "$PWD/data:/workspace/data" \
   -v "$PWD/logs:/workspace/logs" \
   lightning-hydra:dev \
-  python src/train.py trainer=gpu trainer.max_epochs=2
+  python src/train.py experiment=image_classification trainer=gpu
 ```
 
 ## CPU smoke run
