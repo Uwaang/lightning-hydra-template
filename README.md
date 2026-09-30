@@ -57,9 +57,10 @@ python -m pip install -r requirements/all.txt
 Optional dependency groups are also available individually under `requirements/`:
 `vision.txt`, `model-zoo.txt`, `interpretability.txt`, and `sweeps.txt`.
 
-See [feature parity](docs/feature-parity.md), [image data](docs/image-data.md),
-[model adapters](docs/model-adapters.md), [multi-task classification](docs/multitask-classification.md),
-[ReID](docs/reid.md), [VICReg](docs/vicreg.md), and [Docker](docs/docker.md) for the integrated extensions.
+See [feature parity](docs/feature-parity.md), [provenance](docs/provenance.md),
+[image data](docs/image-data.md), [model adapters](docs/model-adapters.md),
+[multi-task classification](docs/multitask-classification.md), [ReID](docs/reid.md),
+[VICReg](docs/vicreg.md), and [Docker](docs/docker.md) for the integrated extensions.
 
 ## 📌  Introduction
 
