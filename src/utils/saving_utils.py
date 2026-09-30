@@ -97,6 +97,38 @@ def _to_python(value: Any) -> Any:
     return value
 
 
+def _batch_lengths(value: Any) -> list[int]:
+    """Collect candidate leading batch dimensions from nested prediction values."""
+    if isinstance(value, torch.Tensor):
+        return [len(value)] if value.ndim > 0 else []
+    if isinstance(value, Mapping):
+        lengths: list[int] = []
+        for item in value.values():
+            lengths.extend(_batch_lengths(item))
+        return lengths
+    if isinstance(value, (list, tuple)):
+        return [len(value)]
+    return []
+
+
+def _slice_batch_value(value: Any, index: int, batch_size: int) -> Any:
+    """Take one sample from a nested prediction value when it carries batch dimension."""
+    if isinstance(value, torch.Tensor):
+        if value.ndim > 0 and len(value) == batch_size:
+            return _to_python(value[index])
+        return _to_python(value)
+    if isinstance(value, Mapping):
+        return {
+            str(key): _slice_batch_value(item, index, batch_size)
+            for key, item in value.items()
+        }
+    if isinstance(value, (list, tuple)):
+        if len(value) == batch_size:
+            return _to_python(value[index])
+        return _to_python(value)
+    return _to_python(value)
+
+
 def _prediction_rows(predictions: Iterable[Mapping[str, Any]]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
 
@@ -104,27 +136,21 @@ def _prediction_rows(predictions: Iterable[Mapping[str, Any]]) -> list[dict[str,
         if not batch:
             continue
 
-        lengths = []
+        lengths: list[int] = []
         for value in batch.values():
-            if isinstance(value, torch.Tensor) and value.ndim > 0:
-                lengths.append(len(value))
-            elif isinstance(value, (list, tuple)):
-                lengths.append(len(value))
+            lengths.extend(_batch_lengths(value))
 
         batch_size = lengths[0] if lengths else 1
         if any(length != batch_size for length in lengths):
             raise ValueError("Prediction batch values must have matching leading dimensions.")
 
         for index in range(batch_size):
-            row: dict[str, Any] = {}
-            for key, value in batch.items():
-                if isinstance(value, torch.Tensor) and value.ndim > 0:
-                    row[key] = _to_python(value[index])
-                elif isinstance(value, (list, tuple)):
-                    row[key] = _to_python(value[index])
-                else:
-                    row[key] = _to_python(value)
-            rows.append(row)
+            rows.append(
+                {
+                    str(key): _slice_batch_value(value, index, batch_size)
+                    for key, value in batch.items()
+                }
+            )
 
     return rows
 
