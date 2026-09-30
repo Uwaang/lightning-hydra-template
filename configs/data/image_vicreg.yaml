@@ -3,22 +3,19 @@ _recursive_: False
 
 datasets:
   train:
-    _target_: src.data.vicreg_dataset.TwoViewClassificationImageDataset
+    _target_: src.data.vicreg_dataset.TwoViewImageDataset
     manifest_path: ${paths.data_dir}/train.json
     root_dir: ${paths.data_dir}/images
-    label_dtype: long
 
   val:
-    _target_: src.data.vicreg_dataset.TwoViewClassificationImageDataset
+    _target_: src.data.vicreg_dataset.TwoViewImageDataset
     manifest_path: ${paths.data_dir}/val.json
     root_dir: ${paths.data_dir}/images
-    label_dtype: long
 
   test:
-    _target_: src.data.vicreg_dataset.TwoViewClassificationImageDataset
+    _target_: src.data.vicreg_dataset.TwoViewImageDataset
     manifest_path: ${paths.data_dir}/test.json
     root_dir: ${paths.data_dir}/images
-    label_dtype: long
 
   predict:
     default:
