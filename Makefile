@@ -1,4 +1,3 @@
-
 help:  ## Show help
 	@grep -E '^[.a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
@@ -28,3 +27,12 @@ test-full: ## Run all tests
 
 train: ## Train the model
 	python src/train.py
+
+docker-build: ## Build the full CUDA development image
+	docker build -t lightning-hydra:dev .
+
+docker-build-core: ## Build a core-only CUDA image
+	docker build --build-arg INSTALL_OPTIONAL=false -t lightning-hydra:core .
+
+docker-train: ## Train in Docker with all NVIDIA GPUs
+	docker run --rm --gpus all --ipc=host -v "$(PWD)/data:/workspace/data" -v "$(PWD)/logs:/workspace/logs" lightning-hydra:dev python src/train.py trainer=gpu

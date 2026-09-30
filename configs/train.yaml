@@ -42,6 +42,9 @@ train: True
 # lightning chooses best weights based on the metric specified in checkpoint callback
 test: True
 
+# export current and best checkpoint weights as plain PyTorch state dicts
+save_state_dict: False
+
 # simply provide checkpoint path to resume training
 ckpt_path: null
 

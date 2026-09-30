@@ -1,0 +1,96 @@
+_target_: src.data.multitask_datamodule.MultiTaskImageDataModule
+_recursive_: False
+train_mode: max_size_cycle
+
+datasets:
+  train:
+    label_a:
+      _target_: src.data.image_dataset.ClassificationImageDataset
+      manifest_path: ${paths.data_dir}/label_a/train.json
+      root_dir: ${paths.data_dir}/images
+      label_dtype: long
+    label_b:
+      _target_: src.data.image_dataset.ClassificationImageDataset
+      manifest_path: ${paths.data_dir}/label_b/train.json
+      root_dir: ${paths.data_dir}/images
+      label_dtype: long
+
+  val:
+    label_a:
+      _target_: src.data.image_dataset.ClassificationImageDataset
+      manifest_path: ${paths.data_dir}/label_a/val.json
+      root_dir: ${paths.data_dir}/images
+      label_dtype: long
+    label_b:
+      _target_: src.data.image_dataset.ClassificationImageDataset
+      manifest_path: ${paths.data_dir}/label_b/val.json
+      root_dir: ${paths.data_dir}/images
+      label_dtype: long
+
+  test:
+    label_a:
+      _target_: src.data.image_dataset.ClassificationImageDataset
+      manifest_path: ${paths.data_dir}/label_a/test.json
+      root_dir: ${paths.data_dir}/images
+      label_dtype: long
+    label_b:
+      _target_: src.data.image_dataset.ClassificationImageDataset
+      manifest_path: ${paths.data_dir}/label_b/test.json
+      root_dir: ${paths.data_dir}/images
+      label_dtype: long
+
+transforms:
+  train:
+    _target_: src.data.components.transforms.AlbumentationsTransform
+    operations:
+      - _target_: albumentations.Resize
+        height: 224
+        width: 224
+      - _target_: albumentations.HorizontalFlip
+        p: 0.5
+      - _target_: albumentations.Normalize
+        mean: [0.485, 0.456, 0.406]
+        std: [0.229, 0.224, 0.225]
+
+  val:
+    _target_: src.data.components.transforms.AlbumentationsTransform
+    operations:
+      - _target_: albumentations.Resize
+        height: 224
+        width: 224
+      - _target_: albumentations.Normalize
+        mean: [0.485, 0.456, 0.406]
+        std: [0.229, 0.224, 0.225]
+
+  test: ${data.transforms.val}
+  predict: ${data.transforms.val}
+
+loaders:
+  train:
+    batch_size: 64
+    shuffle: True
+    num_workers: 4
+    pin_memory: True
+    drop_last: True
+    persistent_workers: True
+  val:
+    batch_size: 64
+    shuffle: False
+    num_workers: 4
+    pin_memory: True
+    drop_last: False
+    persistent_workers: True
+  test:
+    batch_size: 64
+    shuffle: False
+    num_workers: 4
+    pin_memory: True
+    drop_last: False
+    persistent_workers: True
+  predict:
+    batch_size: 64
+    shuffle: False
+    num_workers: 4
+    pin_memory: True
+    drop_last: False
+    persistent_workers: True

@@ -1,0 +1,5 @@
+mrr:
+  _target_: torchmetrics.retrieval.RetrievalMRR
+
+ndcg:
+  _target_: torchmetrics.retrieval.RetrievalNormalizedDCG

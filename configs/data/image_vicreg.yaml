@@ -1,0 +1,89 @@
+_target_: src.data.image_datamodule.ImageDataModule
+_recursive_: False
+
+datasets:
+  train:
+    _target_: src.data.vicreg_dataset.TwoViewImageDataset
+    manifest_path: ${paths.data_dir}/train.json
+    root_dir: ${paths.data_dir}/images
+
+  val:
+    _target_: src.data.vicreg_dataset.TwoViewImageDataset
+    manifest_path: ${paths.data_dir}/val.json
+    root_dir: ${paths.data_dir}/images
+
+  test:
+    _target_: src.data.vicreg_dataset.TwoViewImageDataset
+    manifest_path: ${paths.data_dir}/test.json
+    root_dir: ${paths.data_dir}/images
+
+  predict:
+    default:
+      _target_: src.data.image_dataset.UnlabeledImageDataset
+      manifest_path: ${paths.data_dir}/predict.json
+      root_dir: ${paths.data_dir}/images
+      include_name: True
+
+transforms:
+  train:
+    _target_: src.data.components.transforms.AlbumentationsTransform
+    operations:
+      - _target_: albumentations.RandomResizedCrop
+        size: [224, 224]
+        scale: [0.2, 1.0]
+      - _target_: albumentations.HorizontalFlip
+        p: 0.5
+      - _target_: albumentations.ColorJitter
+        brightness: 0.4
+        contrast: 0.4
+        saturation: 0.2
+        hue: 0.1
+        p: 0.8
+      - _target_: albumentations.ToGray
+        p: 0.2
+      - _target_: albumentations.Normalize
+        mean: [0.485, 0.456, 0.406]
+        std: [0.229, 0.224, 0.225]
+
+  val:
+    _target_: src.data.components.transforms.AlbumentationsTransform
+    operations:
+      - _target_: albumentations.Resize
+        height: 224
+        width: 224
+      - _target_: albumentations.Normalize
+        mean: [0.485, 0.456, 0.406]
+        std: [0.229, 0.224, 0.225]
+
+  test: ${data.transforms.val}
+  predict: ${data.transforms.val}
+
+loaders:
+  train:
+    batch_size: 128
+    shuffle: True
+    num_workers: 4
+    pin_memory: True
+    drop_last: True
+    persistent_workers: True
+  val:
+    batch_size: 128
+    shuffle: False
+    num_workers: 4
+    pin_memory: True
+    drop_last: False
+    persistent_workers: True
+  test:
+    batch_size: 128
+    shuffle: False
+    num_workers: 4
+    pin_memory: True
+    drop_last: False
+    persistent_workers: True
+  predict:
+    batch_size: 128
+    shuffle: False
+    num_workers: 4
+    pin_memory: True
+    drop_last: False
+    persistent_workers: True

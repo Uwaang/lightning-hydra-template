@@ -2,13 +2,13 @@
 
 # Lightning-Hydra-Template
 
-[![python](https://img.shields.io/badge/-Python_3.8_%7C_3.9_%7C_3.10-blue?logo=python&logoColor=white)](https://github.com/pre-commit/pre-commit)
-[![pytorch](https://img.shields.io/badge/PyTorch_2.0+-ee4c2c?logo=pytorch&logoColor=white)](https://pytorch.org/get-started/locally/)
-[![lightning](https://img.shields.io/badge/-Lightning_2.0+-792ee5?logo=pytorchlightning&logoColor=white)](https://pytorchlightning.ai/)
+[![python](https://img.shields.io/badge/-Python_3.10_%7C_3.11_%7C_3.12-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![pytorch](https://img.shields.io/badge/PyTorch_2.14-ee4c2c?logo=pytorch&logoColor=white)](https://pytorch.org/get-started/locally/)
+[![lightning](https://img.shields.io/badge/-Lightning_2.6-792ee5?logo=pytorchlightning&logoColor=white)](https://lightning.ai/)
 [![hydra](https://img.shields.io/badge/Config-Hydra_1.3-89b8cd)](https://hydra.cc/)
 [![black](https://img.shields.io/badge/Code%20Style-Black-black.svg?labelColor=gray)](https://black.readthedocs.io/en/stable/)
 [![isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336)](https://pycqa.github.io/isort/) <br>
-[![tests](https://github.com/ashleve/lightning-hydra-template/actions/workflows/test.yml/badge.svg)](https://github.com/ashleve/lightning-hydra-template/actions/workflows/test.yml)
+[![tests](https://github.com/Uwaang/lightning-hydra-template/actions/workflows/test.yml/badge.svg)](https://github.com/Uwaang/lightning-hydra-template/actions/workflows/test.yml)
 [![code-quality](https://github.com/ashleve/lightning-hydra-template/actions/workflows/code-quality-main.yaml/badge.svg)](https://github.com/ashleve/lightning-hydra-template/actions/workflows/code-quality-main.yaml)
 [![codecov](https://codecov.io/gh/ashleve/lightning-hydra-template/branch/main/graph/badge.svg)](https://codecov.io/gh/ashleve/lightning-hydra-template) <br>
 [![license](https://img.shields.io/badge/License-MIT-green.svg?labelColor=gray)](https://github.com/ashleve/lightning-hydra-template#license)
@@ -23,6 +23,44 @@ _Suggestions are always welcome!_
 </div>
 
 <br>
+
+## Integrated 2026 fork
+
+This fork keeps the modern project structure of
+[ashleve/lightning-hydra-template](https://github.com/ashleve/lightning-hydra-template)
+and reimplements the reusable CV/data features from
+[gorodnitskiy/yet-another-lightning-hydra-template](https://github.com/gorodnitskiy/yet-another-lightning-hydra-template)
+for Lightning 2.6 and PyTorch 2.14.
+
+The integrated stack adds:
+
+- manifest-driven image datasets, Albumentations, HDF5, and multiple prediction loaders
+- torchvision, timm, and segmentation-models-pytorch adapters
+- generic classification and explicit multi-task training with Lightning `CombinedLoader`
+- Focal Loss, ArcFace, SphereFace, CosFace, ReID/GeM, and VICReg
+- JSON/CSV prediction export, plain state-dict export, and run metadata snapshots
+- optional Grad-CAM tooling and scoped Git LFS rules
+- a modern CUDA Docker image and separate core/full-stack CI paths
+
+Install only the minimal template dependencies:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+Or install the complete integrated feature set:
+
+```bash
+python -m pip install -r requirements/all.txt
+```
+
+Optional dependency groups are also available individually under `requirements/`:
+`vision.txt`, `model-zoo.txt`, `interpretability.txt`, and `sweeps.txt`.
+
+See [feature parity](docs/feature-parity.md), [provenance](docs/provenance.md),
+[image data](docs/image-data.md), [model adapters](docs/model-adapters.md),
+[multi-task classification](docs/multitask-classification.md), [ReID](docs/reid.md),
+[VICReg](docs/vicreg.md), and [Docker](docs/docker.md) for the integrated extensions.
 
 ## 📌  Introduction
 
@@ -370,6 +408,14 @@ python train.py -m data.batch_size=32,64,128 model.lr=0.001,0.0005
 
 <details>
 <summary><b>Create a sweep over hyperparameters with Optuna</b></summary>
+
+Install the optional Optuna sweep environment once:
+
+```bash
+python -m pip install -r requirements/sweeps.txt
+```
+
+Then run the configured search:
 
 ```bash
 # this will run hyperparameter search defined in `configs/hparams_search/mnist_optuna.yaml`
@@ -770,6 +816,15 @@ There is also `@RunIf` decorator implemented, that allows you to run tests only 
 <br>
 
 ## Hyperparameter Search
+
+Optuna sweeping is an optional dependency in this fork so the core environment
+stays small. The Hydra 1.3 baseline uses the stable, tested pair
+`hydra-optuna-sweeper==1.2.0` and `optuna==2.10.1`. Install the sweep
+environment before using the Optuna config:
+
+```bash
+python -m pip install -r requirements/sweeps.txt
+```
 
 You can define hyperparameter search by adding new config file to [configs/hparams_search](configs/hparams_search).
 

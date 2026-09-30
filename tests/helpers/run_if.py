@@ -1,15 +1,12 @@
-"""Adapted from:
-
-https://github.com/PyTorchLightning/pytorch-lightning/blob/master/tests/helpers/runif.py
-"""
+"""Adapted from the PyTorch Lightning test helper RunIf pattern."""
 
 import sys
+from importlib.metadata import version
 from typing import Any, Dict, Optional
 
 import pytest
 import torch
 from packaging.version import Version
-from pkg_resources import get_distribution
 from pytest import MarkDecorator
 
 from tests.helpers.package_available import (
@@ -19,6 +16,7 @@ from tests.helpers.package_available import (
     _IS_WINDOWS,
     _MLFLOW_AVAILABLE,
     _NEPTUNE_AVAILABLE,
+    _OPTUNA_SWEEPER_AVAILABLE,
     _SH_AVAILABLE,
     _TPU_AVAILABLE,
     _WANDB_AVAILABLE,
@@ -26,19 +24,7 @@ from tests.helpers.package_available import (
 
 
 class RunIf:
-    """RunIf wrapper for conditional skipping of tests.
-
-    Fully compatible with `@pytest.mark`.
-
-    Example:
-
-    ```python
-        @RunIf(min_torch="1.8")
-        @pytest.mark.parametrize("arg1", [1.0, 2.0])
-        def test_wrapper(arg1):
-            assert arg1 > 0
-    ```
-    """
+    """RunIf wrapper for conditional skipping of tests."""
 
     def __new__(
         cls,
@@ -55,25 +41,10 @@ class RunIf:
         neptune: bool = False,
         comet: bool = False,
         mlflow: bool = False,
+        optuna_sweeper: bool = False,
         **kwargs: Dict[Any, Any],
     ) -> MarkDecorator:
-        """Creates a new `@RunIf` `MarkDecorator` decorator.
-
-        :param min_gpus: Min number of GPUs required to run test.
-        :param min_torch: Minimum pytorch version to run test.
-        :param max_torch: Maximum pytorch version to run test.
-        :param min_python: Minimum python version required to run test.
-        :param skip_windows: Skip test for Windows platform.
-        :param tpu: If TPU is available.
-        :param sh: If `sh` module is required to run the test.
-        :param fairscale: If `fairscale` module is required to run the test.
-        :param deepspeed: If `deepspeed` module is required to run the test.
-        :param wandb: If `wandb` module is required to run the test.
-        :param neptune: If `neptune` module is required to run the test.
-        :param comet: If `comet` module is required to run the test.
-        :param mlflow: If `mlflow` module is required to run the test.
-        :param kwargs: Native `pytest.mark.skipif` keyword arguments.
-        """
+        """Create a new pytest skip marker from runtime requirements."""
         conditions = []
         reasons = []
 
@@ -82,12 +53,12 @@ class RunIf:
             reasons.append(f"GPUs>={min_gpus}")
 
         if min_torch:
-            torch_version = get_distribution("torch").version
+            torch_version = version("torch")
             conditions.append(Version(torch_version) < Version(min_torch))
             reasons.append(f"torch>={min_torch}")
 
         if max_torch:
-            torch_version = get_distribution("torch").version
+            torch_version = version("torch")
             conditions.append(Version(torch_version) >= Version(max_torch))
             reasons.append(f"torch<{max_torch}")
 
@@ -134,7 +105,11 @@ class RunIf:
             conditions.append(not _MLFLOW_AVAILABLE)
             reasons.append("mlflow")
 
-        reasons = [rs for cond, rs in zip(conditions, reasons) if cond]
+        if optuna_sweeper:
+            conditions.append(not _OPTUNA_SWEEPER_AVAILABLE)
+            reasons.append("hydra-optuna-sweeper")
+
+        reasons = [reason for condition, reason in zip(conditions, reasons) if condition]
         return pytest.mark.skipif(
             condition=any(conditions),
             reason=f"Requires: [{' + '.join(reasons)}]",

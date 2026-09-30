@@ -9,6 +9,9 @@ from lightning.pytorch.loggers import Logger
 from omegaconf import DictConfig
 
 rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
+from src.utils.console_utils import configure_windows_stdio
+
+configure_windows_stdio()
 # ------------------------------------------------------------------------------------ #
 # the setup_root above is equivalent to:
 # - adding project root dir to PYTHONPATH
@@ -33,6 +36,8 @@ from src.utils import (
     instantiate_callbacks,
     instantiate_loggers,
     log_hyperparameters,
+    log_run_metadata,
+    save_state_dicts,
     task_wrapper,
 )
 
@@ -41,8 +46,9 @@ log = RankedLogger(__name__, rank_zero_only=True)
 
 @task_wrapper
 def train(cfg: DictConfig) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-    """Trains the model. Can additionally evaluate on a testset, using best weights obtained during
-    training.
+    """Trains the model.
+
+    Can additionally evaluate on a testset, using best weights obtained during training.
 
     This method is wrapped in optional @task_wrapper decorator, that controls the behavior during
     failure. Useful for multiruns, saving info about the crash, etc.
@@ -82,11 +88,24 @@ def train(cfg: DictConfig) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         log.info("Logging hyperparameters!")
         log_hyperparameters(object_dict)
 
+    if cfg.get("extras") and cfg.extras.get("log_metadata"):
+        log_run_metadata(cfg)
+
     if cfg.get("train"):
         log.info("Starting training!")
         trainer.fit(model=model, datamodule=datamodule, ckpt_path=cfg.get("ckpt_path"))
 
-    train_metrics = trainer.callback_metrics
+    train_metrics = dict(trainer.callback_metrics)
+
+    if cfg.get("save_state_dict") and cfg.get("train"):
+        state_dict_cfg = cfg.extras.get("state_dict", {})
+        save_state_dicts(
+            trainer=trainer,
+            model=model,
+            dirname=cfg.paths.output_dir,
+            strip_prefix=state_dict_cfg.get("strip_prefix", ""),
+            exclude_prefixes=state_dict_cfg.get("exclude_prefixes", []),
+        )
 
     if cfg.get("test"):
         log.info("Starting testing!")
@@ -97,7 +116,7 @@ def train(cfg: DictConfig) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         trainer.test(model=model, datamodule=datamodule, ckpt_path=ckpt_path)
         log.info(f"Best ckpt path: {ckpt_path}")
 
-    test_metrics = trainer.callback_metrics
+    test_metrics = dict(trainer.callback_metrics)
 
     # merge train and test metrics
     metric_dict = {**train_metrics, **test_metrics}
