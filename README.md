@@ -409,7 +409,7 @@ python train.py -m data.batch_size=32,64,128 model.lr=0.001,0.0005
 <details>
 <summary><b>Create a sweep over hyperparameters with Optuna</b></summary>
 
-Install the optional modern Optuna sweeper once:
+Install the optional Optuna sweep environment once:
 
 ```bash
 python -m pip install -r requirements/sweeps.txt
@@ -818,7 +818,8 @@ There is also `@RunIf` decorator implemented, that allows you to run tests only 
 ## Hyperparameter Search
 
 Optuna sweeping is an optional dependency in this fork so the core environment
-is not tied to the legacy Optuna 2.x plugin stack. Install the maintained sweep
+stays small. The Hydra 1.3 baseline uses the stable, tested pair
+`hydra-optuna-sweeper==1.2.0` and `optuna==2.10.1`. Install the sweep
 environment before using the Optuna config:
 
 ```bash

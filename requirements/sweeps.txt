@@ -1,5 +1,7 @@
 -r ../requirements.txt
 
-# The stable 1.2.0 plugin is tied to Optuna 2.x. The current development
-# release supports the modern Optuna 4.x stack used by this 2026 template.
-hydra-optuna-sweeper==1.4.0.dev9
+# Hydra 1.3.7 is compatible with the stable Optuna sweeper line.
+# The 1.4.0.dev9 plugin uses newer Hydra instantiate APIs and is not compatible
+# with this template's stable Hydra 1.3.x baseline.
+hydra-optuna-sweeper==1.2.0
+optuna==2.10.1

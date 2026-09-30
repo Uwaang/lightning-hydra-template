@@ -32,7 +32,7 @@ PyTorch Lightning 1.8 runtime forward.
 
 - Optional vision/model/interpretability/sweep dependencies are separated from core.
 - Albumentations and h5py are lazy imports rather than core import-time requirements.
-- Optuna sweeping uses a separate modern plugin environment instead of the legacy stable 1.2.0 stack.
+- Optuna sweeping uses a separate tested environment: `hydra-optuna-sweeper==1.2.0` + `optuna==2.10.1`, compatible with the stable Hydra 1.3.7 baseline.
 - VICReg supports unlabeled manifests and monitors `val/loss`.
 - Multi-head prediction export recursively handles nested batched mappings.
 - HDF5 file handles are opened lazily per process.
