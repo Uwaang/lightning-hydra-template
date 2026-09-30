@@ -15,8 +15,9 @@ The integration candidate has completed its planned merge gates:
 - [x] CUDA `fast_dev_run` on a GTX 1660;
 - [x] license/provenance review.
 
-A full Docker image build/run remains useful as a post-merge smoke test, but it
-is not a blocking merge criterion.
+The post-merge Docker smoke test is also complete: the full-stack image builds,
+`python -m pip check` is clean, model-zoo imports succeed, and the GPU
+`fast_dev_run` completes inside the container.
 
 ## 1. Full CPU environment
 
@@ -82,7 +83,9 @@ python src/train.py \
 
 PR #12 was validated on a GeForce GTX 1660 with PyTorch 2.14.0+cu130,
 torchvision 0.29.0+cu130, and CUDA runtime 13.0. Lightning selected GPU 0 and
-completed train, validation, and test with exit code 0.
+completed train, validation, and test with exit code 0. The same path was then
+validated again inside the built Docker image; `pip check` was clean and the
+container completed train, validation, and test on GPU with exit code 0.
 
 For Docker:
 

@@ -23,6 +23,10 @@ docker build \
 
 The default image installs the core requirements plus the optional vision,
 model-zoo, HDF5, and Grad-CAM dependencies from `requirements/all.txt`.
+Dependencies are installed in `/opt/venv` with `--system-site-packages` so the
+PyTorch/CUDA stack from the base image is reused without modifying Ubuntu's
+PEP 668-managed system Python. Docker-only dependency constraints live in
+`requirements/docker-constraints.txt` and do not affect ordinary host installs.
 
 ```bash
 docker build -t lightning-hydra:dev .
@@ -36,8 +40,10 @@ docker build \
   -t lightning-hydra:core .
 ```
 
-The container runs as an unprivileged `app` user by default. On Linux, pass
-your host UID/GID when bind-mounted files should retain host ownership:
+The container runs as the configured numeric UID/GID by default. Existing
+UID/GID entries in the PyTorch base image are reused when present, so the
+common `1000:1000` case does not fail during the build. On Linux, pass your
+host UID/GID when bind-mounted files should retain host ownership:
 
 ```bash
 docker build \
@@ -79,3 +85,10 @@ docker run --rm lightning-hydra:dev \
 
 Large training data, checkpoints, ONNX files, TensorRT engines, and local
 environment files are excluded from the Docker build context by default.
+
+## Validated smoke environment
+
+The full-stack image was built and exercised on Docker Desktop 4.52 with an
+NVIDIA GeForce GTX 1660. The final image passed `python -m pip check`, imported
+timm 1.0.30 and segmentation-models-pytorch 0.5.0, and completed MNIST train,
+validation, and test with `trainer=gpu ++trainer.fast_dev_run=true` using CUDA.
