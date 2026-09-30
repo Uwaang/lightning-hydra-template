@@ -43,6 +43,29 @@ def test_save_predictions_json(tmp_path: Path) -> None:
     ]
 
 
+def test_save_predictions_nested_multihead_json(tmp_path: Path) -> None:
+    predictions = [
+        {
+            "logits": {
+                "a": torch.tensor([[0.1, 0.9], [0.8, 0.2]]),
+                "b": torch.tensor([[0.7, 0.3], [0.4, 0.6]]),
+            },
+            "preds": {
+                "a": torch.tensor([1, 0]),
+                "b": torch.tensor([0, 1]),
+            },
+        }
+    ]
+
+    paths = save_predictions(predictions, tmp_path, output_format="json")
+    content = json.loads(paths[0].read_text(encoding="utf-8"))
+
+    assert len(content) == 2
+    assert content[0]["preds"] == {"a": 1, "b": 0}
+    assert content[1]["preds"] == {"a": 0, "b": 1}
+    assert len(content[0]["logits"]["a"]) == 2
+
+
 def test_save_predictions_multiple_dataloaders(tmp_path: Path) -> None:
     predictions = [
         [{"preds": torch.tensor([1])}],
