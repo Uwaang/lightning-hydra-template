@@ -32,17 +32,20 @@ PyTorch Lightning 1.8 runtime forward.
 
 - Optional vision/model/interpretability/sweep dependencies are separated from core.
 - Albumentations and h5py are lazy imports rather than core import-time requirements.
-- Optuna sweeping uses a separate tested environment: `hydra-optuna-sweeper==1.2.0` + `optuna==2.10.1`, compatible with the stable Hydra 1.3.7 baseline.
+- Optuna sweeping uses the tested `hydra-optuna-sweeper==1.2.0` +
+  `optuna==2.10.1` pair with the stable Hydra 1.3.7 baseline.
 - VICReg supports unlabeled manifests and monitors `val/loss`.
 - Multi-head prediction export recursively handles nested batched mappings.
 - HDF5 file handles are opened lazily per process.
 - Image experiments are config-composed in ordinary CI without requiring user datasets.
 - Runtime sweep smoke tests are separated from the cross-platform non-slow suite.
-- README and feature-parity documentation describe the integrated extensions.
+- Windows non-UTF consoles no longer crash Lightning Rich progress output.
+- Pre-commit, Bandit, docstring coverage, nbQA, and shell line-ending handling are CI-clean.
+- README, validation, feature-parity, and provenance documentation describe the integrated extensions.
 
 ## Validation completed
 
-Dependency-free validation on an isolated clone:
+Static and dependency-free validation:
 
 - 59 Python source/test/script files parse successfully.
 - 45 local Hydra targets resolve to existing symbols.
@@ -51,33 +54,55 @@ Dependency-free validation on an isolated clone:
 - No unresolved merge markers.
 - `git diff --check` passes.
 - Shell scripts pass `bash -n`.
-- Every non-deleted file contributed by the ten modular feature branches is present in the full-stack tree.
+- Every non-deleted file contributed by the ten modular feature branches is present.
 
-Individual implementation paths were also exercised during development.
-A separate isolated sandbox with PyTorch 2.10 CPU, torchvision 0.25,
-Lightning 2.6.5, and TorchMetrics 1.9 successfully ran:
+Exact target CPU validation:
 
-- a real Lightning `Trainer.fit(fast_dev_run=True)` with the integrated
-  multi-task `CombinedLoader(max_size_cycle)` pattern;
-- angular-margin and VICReg backward passes;
-- ResNet-18, MobileNetV3-Small, and ViT-B/16 classifier-head replacement;
-- ResNet-18 `layer4 -> GeM -> projection -> L2 normalization` for ReID;
-- nested HDF5 image-byte roundtrip; and
-- per-sample splitting of nested multi-head prediction outputs.
+- Python 3.12 + PyTorch 2.14.0 + torchvision 0.29.0 + Lightning 2.6.6.
+- Local non-slow suite: 43 passed, 1 skipped, 10 deselected, 0 failed.
+- MNIST `fast_dev_run`: passed.
+- Hydra basic two-trial sweep: passed.
+- Optuna three-trial sweep: passed.
+- `pip check`: no broken requirements.
 
-The exact target PyTorch 2.14 / torchvision 0.29 environment still requires
-the full dependency-install test gate below.
+GitHub Actions on PR #12:
 
-## Remaining merge gates
+- Linux Python 3.10: passed.
+- Linux Python 3.11: passed.
+- Linux Python 3.12: passed.
+- Windows Python 3.12: passed.
+- macOS Python 3.12: passed.
+- vision-tests: passed.
+- full-stack-tests, including selected Hydra/Optuna smoke tests: passed.
+- code coverage job: passed.
+- Code Quality PR: passed.
 
-1. **Full dependency pytest:** pending. GitHub Actions currently creates no runs
-   for this fork, and the connected local execution bridge requires separate
-   approval before it can install network packages.
-2. **GPU smoke test:** run at least one CUDA `fast_dev_run` after the CPU/full
-   suite is green.
-3. **License/provenance review:** preserve the upstream MIT notice and confirm
-   that any reference-derived implementation is safe to publish before merging
-   the integration PR.
+Exact target GPU smoke:
+
+- NVIDIA GeForce GTX 1660, driver 591.86.
+- PyTorch 2.14.0+cu130 and torchvision 0.29.0+cu130.
+- CUDA runtime 13.0; `torch.cuda.is_available() == True`.
+- Lightning selected GPU 0 and completed MNIST train, validation, and test under
+  `fast_dev_run` with exit code 0.
+
+Additional component-level runtime checks covered `CombinedLoader`,
+angular-margin/VICReg backward passes, torchvision head replacement, ReID/GeM,
+nested HDF5 roundtrips, nested prediction serialization, and Grad-CAM module
+resolution.
+
+## Merge gates
+
+All planned merge gates are complete:
+
+1. ✅ Full dependency CPU pytest / integration smoke.
+2. ✅ CUDA `fast_dev_run` on a real NVIDIA GPU.
+3. ✅ License/provenance review with upstream MIT notice preserved and the
+   unlicensed secondary reference treated as a behavioral reference rather than
+   vendored source.
+
+The Dockerfile and dependency graph are checked by repository validation, but a
+full Docker image build/run was not used as a merge gate and remains an optional
+post-merge smoke test.
 
 ## Migration rules
 

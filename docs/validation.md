@@ -2,6 +2,22 @@
 
 Use this checklist before marking the full integration PR ready for review.
 
+## Current PR #12 status
+
+The integration candidate has completed its planned merge gates:
+
+- [x] full non-slow CPU suite;
+- [x] Hydra basic sweep;
+- [x] Optuna three-trial sweep;
+- [x] cross-platform GitHub Actions;
+- [x] full optional-dependency CI;
+- [x] Code Quality PR;
+- [x] CUDA `fast_dev_run` on a GTX 1660;
+- [x] license/provenance review.
+
+A full Docker image build/run remains useful as a post-merge smoke test, but it
+is not a blocking merge criterion.
+
 ## 1. Full CPU environment
 
 Create an isolated environment and install the target CPU PyTorch stack:
@@ -38,15 +54,7 @@ python -m pytest \
 
 ## 2. GitHub Actions on this fork
 
-The Tests workflow supports manual dispatch.
-
-If GitHub has workflows disabled for the fork:
-
-1. open the repository's **Actions** tab;
-2. enable workflows for the fork using GitHub's fork-workflow control;
-3. open the **Tests** workflow;
-4. choose **Run workflow**;
-5. select `integration/full-stack`.
+The Tests workflow supports manual dispatch and is enabled for this fork.
 
 The workflow contains:
 
@@ -56,10 +64,14 @@ The workflow contains:
 - selected Hydra/Optuna integration smoke tests;
 - coverage collection.
 
+PR #12 also runs the Code Quality PR workflow, which covers formatting,
+docstring coverage, Flake8, Bandit, YAML/Markdown formatting, ShellCheck,
+codespell, and nbQA.
+
 ## 3. CUDA smoke test
 
-After CPU tests pass, verify the target machine's NVIDIA driver and container
-runtime, then run at least the MNIST path on one GPU:
+After CPU tests pass, verify the target machine's NVIDIA driver and run at least
+the MNIST path on one GPU:
 
 ```bash
 python src/train.py \
@@ -67,6 +79,10 @@ python src/train.py \
   ++trainer.fast_dev_run=true \
   logger=[]
 ```
+
+PR #12 was validated on a GeForce GTX 1660 with PyTorch 2.14.0+cu130,
+torchvision 0.29.0+cu130, and CUDA runtime 13.0. Lightning selected GPU 0 and
+completed train, validation, and test with exit code 0.
 
 For Docker:
 
@@ -97,10 +113,9 @@ settings.
 
 ## Ready-to-merge criteria
 
-Mark the integration PR ready only after:
-
-- the full non-slow CPU suite passes;
-- Hydra basic and Optuna smoke tests pass;
-- at least one CUDA fast-dev run passes;
-- no new license/provenance concern is introduced;
-- the PR diff still preserves the original ashleve MIT notice.
+- [x] full non-slow CPU suite passes;
+- [x] Hydra basic and Optuna smoke tests pass;
+- [x] at least one CUDA fast-dev run passes;
+- [x] no unresolved license/provenance concern;
+- [x] original ashleve MIT notice is preserved;
+- [x] Tests and Code Quality PR workflows are green.
