@@ -96,7 +96,8 @@ class ClassificationImageDataset(BaseImageDataset):
             raise ValueError("Classification manifests require a 'label' for every sample.")
 
         if shuffle_seed is not None:
-            random.Random(shuffle_seed).shuffle(self.samples)
+            # Deterministic dataset ordering; this RNG is not used for security.
+            random.Random(shuffle_seed).shuffle(self.samples)  # nosec B311
 
         self.root_dir = Path(root_dir)
         self.store = HDF5ImageStore(hdf5_path) if hdf5_path else None

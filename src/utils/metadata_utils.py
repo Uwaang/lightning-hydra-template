@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import shutil
-import subprocess
+import subprocess  # nosec B404 - fixed argv metadata commands, never shell=True
 import sys
 from pathlib import Path
 from typing import Sequence
@@ -18,7 +18,7 @@ log = RankedLogger(__name__, rank_zero_only=True)
 def run_command(command: Sequence[str], cwd: str | Path | None = None) -> str:
     """Run a metadata command without invoking a shell."""
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # nosec B603 - argv list is executed without a shell
             list(command),
             cwd=cwd,
             check=False,

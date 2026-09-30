@@ -4,7 +4,7 @@ from pathlib import Path
 
 import torch
 
-from src.utils.saving_utils import process_state_dict, save_predictions
+from src.utils.saving_utils import _load_checkpoint_state_dict, process_state_dict, save_predictions
 
 
 def test_process_state_dict() -> None:
@@ -23,6 +23,17 @@ def test_process_state_dict() -> None:
     )
 
     assert list(processed) == ["layer.weight", "layer.bias"]
+
+
+def test_load_checkpoint_state_dict_uses_safe_weights_only(tmp_path: Path) -> None:
+    checkpoint_path = tmp_path / "model.ckpt"
+    state = OrderedDict({"net.weight": torch.tensor([1.0, 2.0])})
+    torch.save({"state_dict": state, "epoch": 1}, checkpoint_path)
+
+    loaded = _load_checkpoint_state_dict(checkpoint_path)
+
+    assert list(loaded) == ["net.weight"]
+    assert torch.equal(loaded["net.weight"], state["net.weight"])
 
 
 def test_save_predictions_json(tmp_path: Path) -> None:

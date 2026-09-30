@@ -36,7 +36,7 @@ def process_state_dict(
 
 
 def _load_checkpoint_state_dict(path: str | Path) -> Mapping[str, Any]:
-    checkpoint = torch.load(Path(path), map_location="cpu", weights_only=False)
+    checkpoint = torch.load(Path(path), map_location="cpu", weights_only=True)
     if not isinstance(checkpoint, Mapping) or "state_dict" not in checkpoint:
         raise ValueError(f"Checkpoint does not contain a Lightning state_dict: {path}")
     return checkpoint["state_dict"]
