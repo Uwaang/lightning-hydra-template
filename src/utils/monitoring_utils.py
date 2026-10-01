@@ -3,6 +3,7 @@ from __future__ import annotations
 import shutil
 import subprocess  # nosec B404 - fixed nvidia-smi argv, never shell=True
 from time import perf_counter
+
 import torch
 from lightning import Callback, LightningModule, Trainer
 
@@ -76,8 +77,7 @@ def collect_system_metrics(
             {
                 "system/cuda_memory_allocated_mb": torch.cuda.memory_allocated(device)
                 / (1024.0**2),
-                "system/cuda_memory_reserved_mb": torch.cuda.memory_reserved(device)
-                / (1024.0**2),
+                "system/cuda_memory_reserved_mb": torch.cuda.memory_reserved(device) / (1024.0**2),
                 "system/cuda_max_memory_allocated_mb": torch.cuda.max_memory_allocated(device)
                 / (1024.0**2),
             }
@@ -140,9 +140,7 @@ class ResearchMonitorCallback(Callback):
             )
         self._log(trainer, metrics)
 
-    def on_validation_epoch_start(
-        self, trainer: Trainer, pl_module: LightningModule
-    ) -> None:
+    def on_validation_epoch_start(self, trainer: Trainer, pl_module: LightningModule) -> None:
         del trainer, pl_module
         if self.log_epoch_time:
             self._validation_epoch_started_at = perf_counter()
@@ -153,8 +151,5 @@ class ResearchMonitorCallback(Callback):
             return
         self._log(
             trainer,
-            {
-                "time/validation_epoch_seconds": perf_counter()
-                - self._validation_epoch_started_at
-            },
+            {"time/validation_epoch_seconds": perf_counter() - self._validation_epoch_started_at},
         )
