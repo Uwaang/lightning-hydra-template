@@ -41,6 +41,12 @@ jobs:
         continue-on-error: true
         run: uv run --with pyright pyright src
 
+      - name: Show mypy version
+        run: uv run --with mypy mypy --version
+
       - name: Run mypy
         continue-on-error: true
         run: uv run --with mypy mypy src --follow-imports=skip
+
+      - name: Run mypy project-local gate candidate
+        run: uv run --with mypy mypy src --follow-imports=skip --ignore-missing-imports
