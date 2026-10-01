@@ -223,4 +223,3 @@ class MNISTLitModule(LightningModule):
                 },
             }
         return {"optimizer": optimizer}
-
