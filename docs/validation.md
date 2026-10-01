@@ -36,6 +36,7 @@ The Tests workflow covers:
 - core tests on Linux Python 3.10, 3.11, and 3.12;
 - core tests on Windows and macOS with Python 3.12;
 - the optional vision environment;
+- ONNX export/runtime parity on Python 3.10 and 3.12;
 - the full optional-dependency environment;
 - selected Hydra/Optuna integration smoke tests;
 - coverage collection.
@@ -91,7 +92,7 @@ settings.
 - [ ] locked core and full optional test matrices are green;
 - [ ] Code Quality PR is green;
 - [ ] Docker Smoke is green when packaging or Docker files changed;
-- [ ] exported-artifact tests are green when deployment code changed;
+- [ ] PT2 and ONNX exported-artifact tests are green when deployment code changed;
 - [ ] no unresolved license/provenance concern;
 - [ ] original ashleve MIT notice is preserved;
 - [ ] a real GPU smoke has been run when CUDA behavior materially changed.
