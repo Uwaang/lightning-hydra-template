@@ -1,7 +1,6 @@
 ARG PYTORCH_IMAGE=pytorch/pytorch:2.14.0-cuda13.0-cudnn9-runtime
 FROM ${PYTORCH_IMAGE}
 
-ARG UV_VERSION=0.12.17
 ARG USER_NAME=app
 ARG USER_ID=1000
 ARG GROUP_ID=1000
@@ -12,7 +11,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     UV_PYTHON=/opt/conda/bin/python \
     UV_NO_CACHE=1
 
-COPY --from=ghcr.io/astral-sh/uv:${UV_VERSION} /uv /uvx /bin/
+COPY --from=ghcr.io/astral-sh/uv:0.12.17 /uv /uvx /bin/
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates \
