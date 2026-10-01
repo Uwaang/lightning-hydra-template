@@ -144,6 +144,41 @@ ONNX Runtime line, while newer Python versions use the current runtime line. Exe
 and quantization backends remain optional follow-up deployment layers rather than
 dependencies of the training core.
 
+## Runtime benchmarking
+
+Runtime benchmarks are deliberately independent from W&B, MLflow, or another tracking
+backend. The first benchmark layer compares equivalent CPU inference paths:
+
+- plain PyTorch eager execution;
+- the graph returned by a loaded PT2 `ExportedProgram`;
+- ONNX Runtime with `CPUExecutionProvider`.
+
+Export/setup time is excluded. Measurements use explicit warmup iterations, repeated
+samples, one configurable CPU thread count, and report mean/median/p90/p95 latency plus
+median-based throughput. The raw per-repeat samples are kept in the JSON artifact.
+
+```python
+from src.utils import benchmark_runtime_stack, save_benchmark_report
+
+report = benchmark_runtime_stack(
+    model,
+    (example,),
+    pt2_path="artifacts/model.pt2",
+    onnx_path="artifacts/model.onnx",
+    batch_size=1,
+    warmup_iterations=10,
+    iterations_per_repeat=50,
+    repeats=20,
+    num_threads=1,
+)
+save_benchmark_report(report, "artifacts/benchmark.json")
+```
+
+The PT2 result is named `pytorch_pt2_graph` intentionally: loading an
+`ExportedProgram` does not by itself imply a separate optimized runtime. GPU benchmarking
+is deferred until the PyTorch and ONNX Runtime paths can use comparable GPU execution
+providers and correct asynchronous timing.
+
 ## Docker and CUDA
 
 The CUDA path uses the official PyTorch runtime image and keeps the container process
@@ -196,8 +231,8 @@ tests/         unit, integration, and smoke tests
 
 Near-term work:
 
-1. add runtime/latency benchmark helpers around exported artifacts;
-2. evaluate static type checking after the typed Hydra boundary settles;
+1. evaluate static type checking after the typed Hydra boundary settles;
+2. remove duplicate push/PR CI execution where branch protection still gets equivalent coverage;
 3. add optional ExecuTorch and torchao/PT2E recipes only where a validated backend exists.
 
 Later, optional deployment recipes can add ExecuTorch and torchao/PT2E where a
