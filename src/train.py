@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any
 
 import hydra
@@ -38,7 +39,11 @@ from src.utils import (
     instantiate_callbacks,
     instantiate_loggers,
     log_hyperparameters,
+    log_metrics_to_loggers,
+    log_prediction_table_to_mlflow,
     log_run_metadata,
+    publish_mlflow_artifacts,
+    save_classification_report,
     save_state_dicts,
     task_wrapper,
 )
@@ -86,12 +91,23 @@ def train(cfg: DictConfig) -> tuple[dict[str, Any], dict[str, Any]]:
         "trainer": trainer,
     }
 
+    reporting_cfg = cfg.extras.get("reporting", {}) if cfg.get("extras") else {}
+    reporting_enabled = bool(
+        logger and reporting_cfg.get("enabled", False) and not trainer.fast_dev_run
+    )
+    artifact_groups: dict[str, list[Path]] = {}
+
     if logger:
         log.info("Logging hyperparameters!")
         log_hyperparameters(object_dict)
 
-    if cfg.get("extras") and cfg.extras.get("log_metadata"):
-        log_run_metadata(cfg)
+    should_log_metadata = bool(cfg.get("extras") and cfg.extras.get("log_metadata")) or (
+        reporting_enabled and reporting_cfg.get("log_metadata", True)
+    )
+    if should_log_metadata:
+        metadata_dir = log_run_metadata(cfg)
+        if reporting_enabled:
+            artifact_groups.setdefault("metadata", []).append(metadata_dir)
 
     if cfg.get("train"):
         log.info("Starting training!")
@@ -99,16 +115,22 @@ def train(cfg: DictConfig) -> tuple[dict[str, Any], dict[str, Any]]:
 
     train_metrics = dict(trainer.callback_metrics)
 
-    if cfg.get("save_state_dict") and cfg.get("train"):
+    should_save_state_dicts = bool(cfg.get("save_state_dict")) or (
+        reporting_enabled and reporting_cfg.get("log_state_dicts", True)
+    )
+    if should_save_state_dicts and cfg.get("train"):
         state_dict_cfg = cfg.extras.get("state_dict", {})
-        save_state_dicts(
+        state_dict_paths = save_state_dicts(
             trainer=trainer,
             model=model,
             dirname=cfg.paths.output_dir,
             strip_prefix=state_dict_cfg.get("strip_prefix", ""),
             exclude_prefixes=state_dict_cfg.get("exclude_prefixes", []),
         )
+        if reporting_enabled:
+            artifact_groups.setdefault("weights", []).extend(state_dict_paths.values())
 
+    ckpt_path: str | None = None
     if cfg.get("test"):
         log.info("Starting testing!")
         ckpt_path = trainer.checkpoint_callback.best_model_path
@@ -119,9 +141,64 @@ def train(cfg: DictConfig) -> tuple[dict[str, Any], dict[str, Any]]:
         log.info(f"Best ckpt path: {ckpt_path}")
 
     test_metrics = dict(trainer.callback_metrics)
+    report_metrics: dict[str, float] = {}
 
-    # merge train and test metrics
-    metric_dict = {**train_metrics, **test_metrics}
+    if reporting_enabled and cfg.get("test"):
+        log.info("Generating classification research report!")
+        predictions = trainer.predict(
+            model=model,
+            dataloaders=datamodule.test_dataloader(),
+            ckpt_path=ckpt_path,
+        )
+        try:
+            class_names_cfg = reporting_cfg.get("class_names")
+            class_names = list(class_names_cfg) if class_names_cfg is not None else None
+            report = save_classification_report(
+                predictions=predictions,
+                dirname=cfg.paths.output_dir,
+                split="test",
+                top_k=int(reporting_cfg.get("top_k", 3)),
+                class_names=class_names,
+            )
+        except (KeyError, TypeError, ValueError) as exc:
+            log.warning(f"Classification reporting skipped: {exc}")
+        else:
+            report_metrics = report.metrics
+            log_metrics_to_loggers(
+                trainer.loggers,
+                report.metrics,
+                step=trainer.global_step,
+            )
+            artifact_groups.setdefault("reports/test", []).extend(report.artifacts.values())
+            if reporting_cfg.get("log_prediction_table", True):
+                log_prediction_table_to_mlflow(
+                    trainer.loggers,
+                    report.rows,
+                    artifact_file="reports/test/predictions_table.json",
+                )
+
+    if reporting_enabled:
+        if reporting_cfg.get("log_best_checkpoint", True) and ckpt_path:
+            artifact_groups.setdefault("checkpoints", []).append(Path(ckpt_path))
+
+        output_dir = Path(cfg.paths.output_dir)
+        hydra_dir = output_dir / ".hydra"
+        if hydra_dir.is_dir():
+            artifact_groups.setdefault("config", []).append(hydra_dir)
+        train_log = output_dir / "train.log"
+        if train_log.is_file():
+            artifact_groups.setdefault("logs", []).append(train_log)
+
+        if reporting_cfg.get("log_existing_exports", True):
+            for directory_name in ("artifacts", "exports"):
+                export_dir = output_dir / directory_name
+                if export_dir.is_dir():
+                    artifact_groups.setdefault("exports", []).append(export_dir)
+
+        publish_mlflow_artifacts(trainer.loggers, artifact_groups)
+
+    # merge train, test, and report metrics
+    metric_dict = {**train_metrics, **test_metrics, **report_metrics}
 
     return metric_dict, object_dict
 

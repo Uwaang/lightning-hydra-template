@@ -129,7 +129,7 @@ def _slice_batch_value(value: Any, index: int, batch_size: int) -> Any:
     return _to_python(value)
 
 
-def _prediction_rows(predictions: Iterable[Mapping[str, Any]]) -> list[dict[str, Any]]:
+def prediction_rows(predictions: Iterable[Mapping[str, Any]]) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
 
     for batch in predictions:
@@ -213,7 +213,7 @@ def save_predictions(
             else f"predictions_{index}.{output_format}"
         )
         path = output_dir / filename
-        _save_prediction_rows(_prediction_rows(group), path)
+        _save_prediction_rows(prediction_rows(group), path)
         written.append(path)
         log.info(f"Saved predictions to: {path}")
 
