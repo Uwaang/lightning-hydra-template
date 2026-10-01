@@ -103,7 +103,12 @@ class ResearchMonitorCallback(Callback):
 
     @staticmethod
     def _log(trainer: Trainer, metrics: dict[str, float]) -> None:
-        if not metrics or trainer.fast_dev_run or not trainer.is_global_zero:
+        if (
+            not metrics
+            or trainer.fast_dev_run
+            or trainer.sanity_checking
+            or not trainer.is_global_zero
+        ):
             return
         for logger_instance in trainer.loggers:
             logger_instance.log_metrics(metrics, step=trainer.global_step)
