@@ -28,8 +28,8 @@ class RankedLogger(logging.LoggerAdapter):
     def log(self, level: int, msg: object, *args: object, **kwargs: Any) -> None:
         """Delegate a log call after prefixing the message with the current rank.
 
-        A custom rank=<int> keyword remains supported and filters the record to that process.
-        The keyword is removed before delegating to the standard logging implementation.
+        A custom rank=<int> keyword remains supported and filters the record to that process. The
+        keyword is removed before delegating to the standard logging implementation.
         """
         if not self.isEnabledFor(level):
             return
