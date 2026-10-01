@@ -66,15 +66,25 @@ def select_prediction_table_rows(
     if max_rows < 1:
         return []
 
-    def confidence(row: Mapping[str, Any]) -> float:
+    def confidence(row: Mapping[str, Any]) -> float | None:
         value = row.get("confidence")
-        return float(value) if isinstance(value, (int, float)) else float("inf")
+        return float(value) if isinstance(value, (int, float)) else None
 
     incorrect = [row for row in rows if row.get("correct") is False]
-    incorrect.sort(key=lambda row: -confidence(row))
+    incorrect.sort(
+        key=lambda row: (
+            confidence(row) is None,
+            -(confidence(row) if confidence(row) is not None else 0.0),
+        )
+    )
 
     remaining = [row for row in rows if row.get("correct") is not False]
-    remaining.sort(key=confidence)
+    remaining.sort(
+        key=lambda row: (
+            confidence(row) is None,
+            confidence(row) if confidence(row) is not None else 0.0,
+        )
+    )
 
     return [*incorrect, *remaining][:max_rows]
 
