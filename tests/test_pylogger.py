@@ -30,6 +30,7 @@ def test_ranked_logger_filters_custom_rank(caplog: pytest.LogCaptureFixture) -> 
 
 def test_ranked_logger_rejects_invalid_rank() -> None:
     logger = RankedLogger("test-ranked-invalid")
+    logger.logger.setLevel(logging.INFO)
     rank_zero_only.rank = 0
 
     with pytest.raises(TypeError, match="rank must be an int or None"):
