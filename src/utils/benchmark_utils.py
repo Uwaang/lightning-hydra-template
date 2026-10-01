@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import platform
 import statistics
 from collections.abc import Callable, Sequence
@@ -290,7 +291,7 @@ def benchmark_runtime_stack(
             "platform": platform.platform(),
             "machine": platform.machine(),
             "processor": platform.processor() or "unknown",
-            "logical_cpu_count": str(__import__("os").cpu_count() or "unknown"),
+            "logical_cpu_count": str(os.cpu_count() or "unknown"),
             "torch": str(torch.__version__),
             "onnxruntime": _package_version("onnxruntime"),
         },
