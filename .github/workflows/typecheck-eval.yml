@@ -1,0 +1,46 @@
+name: Type Checker Evaluation
+
+on:
+  push:
+    branches: ["experiment/type-checkers-after-pr17"]
+  workflow_dispatch:
+
+concurrency:
+  group: type-checker-after-pr17
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: "0.12.17"
+          enable-cache: true
+
+      - name: Install Python
+        run: uv python install 3.12
+
+      - name: Sync full environment
+        run: uv sync --python 3.12 --all-extras
+
+      - name: Run ty 0.0.84
+        continue-on-error: true
+        run: uv run --with ty==0.0.84 ty check src
+
+      - name: Run Pyright
+        continue-on-error: true
+        run: uv run --with pyright pyright src
+
+      - name: Run mypy
+        continue-on-error: true
+        run: uv run --with mypy mypy src --follow-imports=skip
