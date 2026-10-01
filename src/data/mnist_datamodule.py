@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, cast
 
 import torch
 from lightning import LightningDataModule
@@ -70,6 +70,10 @@ class MNISTDataModule(LightningDataModule):
         :param pin_memory: Whether to pin memory. Defaults to `False`.
         """
         super().__init__()
+
+        # Hydra composes sequence values as OmegaConf ListConfig objects. Normalize the split
+        # before saving datamodule hyperparameters so checkpoints remain weights-only loadable.
+        train_val_test_split = cast(Tuple[int, int, int], tuple(train_val_test_split))
 
         # this line allows to access init params with 'self.hparams' attribute
         # also ensures init params will be stored in ckpt
