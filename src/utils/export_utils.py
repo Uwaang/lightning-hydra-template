@@ -115,8 +115,8 @@ def export_onnx(
     """Export a plain inference module and optionally assert ONNX Runtime parity.
 
     The modern dynamo exporter captures the model through torch.export. When verification is
-    enabled, torch.onnx.testing.assert_onnx_program compares the ONNX Runtime result against
-    the exported PyTorch program before the ONNXProgram is serialized.
+    enabled, torch.onnx.testing.assert_onnx_program compares the ONNX Runtime result against the
+    exported PyTorch program before the ONNXProgram is serialized.
     """
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
