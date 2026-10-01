@@ -3,8 +3,6 @@ from __future__ import annotations
 import shutil
 import subprocess  # nosec B404 - fixed nvidia-smi argv, never shell=True
 from time import perf_counter
-from typing import Any
-
 import torch
 from lightning import Callback, LightningModule, Trainer
 
@@ -32,7 +30,7 @@ def _single_gpu_nvidia_smi_metrics() -> dict[str, float]:
         return {}
 
     try:
-        result = subprocess.run(  # nosec B603 - fixed argv, no shell
+        result = subprocess.run(  # nosec B603 B607 - fixed argv, no shell
             [
                 "nvidia-smi",
                 "--query-gpu=utilization.gpu,memory.used,memory.total",
