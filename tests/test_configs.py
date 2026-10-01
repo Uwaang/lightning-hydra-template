@@ -3,7 +3,7 @@ import pytest
 from hydra import compose, initialize
 from hydra.core.hydra_config import HydraConfig
 from hydra.errors import ConfigCompositionException
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 
 
 def test_train_config(cfg_train: DictConfig) -> None:
@@ -38,6 +38,15 @@ def test_eval_config(cfg_eval: DictConfig) -> None:
     hydra.utils.instantiate(cfg_eval.data)
     hydra.utils.instantiate(cfg_eval.model)
     hydra.utils.instantiate(cfg_eval.trainer)
+
+
+def test_mlflow_config_uses_sqlite_and_log_artifact_root() -> None:
+    """Local MLflow defaults should avoid the deprecated filesystem tracking backend."""
+    cfg = OmegaConf.load("configs/logger/mlflow.yaml")
+    raw = OmegaConf.to_container(cfg, resolve=False)
+    assert isinstance(raw, dict)
+    assert raw["mlflow"]["tracking_uri"] == "sqlite:///${paths.log_dir}/mlflow/mlflow.db"
+    assert raw["mlflow"]["artifact_location"] == "${paths.log_dir}/mlflow/artifacts"
 
 
 def test_train_schema_rejects_invalid_seed_type() -> None:
