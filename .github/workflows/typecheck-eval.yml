@@ -5,19 +5,17 @@ on:
     branches: ["experiment/type-checkers"]
   workflow_dispatch:
 
+concurrency:
+  group: type-checker-evaluation
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
   evaluate:
-    name: ${{ matrix.checker }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
-
-    strategy:
-      fail-fast: false
-      matrix:
-        checker: [ty, pyright, mypy]
 
     steps:
       - name: Checkout
@@ -35,17 +33,14 @@ jobs:
       - name: Sync full environment
         run: uv sync --python 3.12 --all-extras
 
-      - name: Run ty
-        if: matrix.checker == 'ty'
+      - name: Run ty 0.0.84
         continue-on-error: true
         run: uvx ty@0.0.84 check src
 
       - name: Run Pyright
-        if: matrix.checker == 'pyright'
         continue-on-error: true
         run: uvx pyright src
 
       - name: Run mypy
-        if: matrix.checker == 'mypy'
         continue-on-error: true
         run: uvx mypy src --ignore-missing-imports
