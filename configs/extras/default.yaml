@@ -28,4 +28,9 @@ reporting:
   log_state_dicts: True
   log_best_checkpoint: True
   log_prediction_table: True
+  prediction_table_max_rows: 500
+  log_learning_rate: True
+  log_epoch_time: True
+  log_system_metrics: True
+  log_dataset_provenance: True
   log_existing_exports: True
