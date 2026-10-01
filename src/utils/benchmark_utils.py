@@ -277,9 +277,7 @@ def benchmark_runtime_stack(
     if onnx_path is not None:
         results.append(benchmark_onnx(onnx_path, example_args, **common))
 
-    input_shapes = [
-        list(value.shape) for value in example_args if isinstance(value, torch.Tensor)
-    ]
+    input_shapes = [list(value.shape) for value in example_args if isinstance(value, torch.Tensor)]
     return BenchmarkReport(
         schema_version=1,
         created_at_utc=datetime.now(timezone.utc).isoformat(),
