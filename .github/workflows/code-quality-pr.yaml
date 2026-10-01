@@ -29,6 +29,9 @@ jobs:
       - name: Install Python
         run: uv python install 3.12
 
+      - name: Check lockfile freshness
+        run: uv lock --check
+
       - name: Install quality tools
         run: uv sync --python 3.12 --only-group dev
 
