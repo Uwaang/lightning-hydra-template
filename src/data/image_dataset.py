@@ -40,11 +40,12 @@ class BaseImageDataset(Dataset[dict[str, Any]]):
                 flag = cv2.IMREAD_GRAYSCALE if self.grayscale else cv2.IMREAD_COLOR
                 array = cv2.imread(str(source), flag)
             else:
-                buffer = np.frombuffer(source, dtype=np.uint8)
+                buffer: np.ndarray = np.frombuffer(source, dtype=np.uint8)
                 flag = cv2.IMREAD_GRAYSCALE if self.grayscale else cv2.IMREAD_COLOR
                 array = cv2.imdecode(buffer, flag)
             if array is None:
-                raise ValueError(f"Unable to decode image: {source}")
+                source_description = str(source) if isinstance(source, Path) else "<encoded bytes>"
+                raise ValueError(f"Unable to decode image: {source_description}")
             if not self.grayscale:
                 array = cv2.cvtColor(array, cv2.COLOR_BGR2RGB)
         else:
