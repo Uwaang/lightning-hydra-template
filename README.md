@@ -114,30 +114,35 @@ The integrated optional CV stack includes:
 
 See the focused documentation under `docs/` for component details.
 
-## PyTorch export
+## PyTorch and ONNX export
 
 `src.utils.export_pt2` exports a plain inference `nn.Module` with
-`torch.export`, saves a `.pt2` artifact, loads it again, and checks numerical
-parity against eager execution.
+`torch.export`, saves a `.pt2` artifact, reloads it, and checks eager/runtime
+numerical parity.
+
+`src.utils.export_onnx` uses the modern `torch.export`-based ONNX exporter,
+serializes the returned `ONNXProgram`, and can verify the model with ONNX Runtime.
+
+```bash
+uv sync --extra onnx
+```
 
 ```python
 import torch
 
-from src.utils import export_pt2
+from src.utils import export_onnx, export_pt2
 
 model = ...  # plain torch.nn.Module
 example = torch.randn(1, 3, 224, 224)
 
-exported_program = export_pt2(
-    model,
-    (example,),
-    "artifacts/model.pt2",
-)
+pt2_program = export_pt2(model, (example,), "artifacts/model.pt2")
+onnx_program = export_onnx(model, (example,), "artifacts/model.onnx", verify=True)
 ```
 
-The current utility intentionally stops at the PyTorch export boundary. ONNX Runtime,
-ExecuTorch, and quantization backends are planned as optional deployment layers rather
-than dependencies of the training core.
+The ONNX extra is tested on Python 3.10 and 3.12. Python 3.10 uses the last compatible
+ONNX Runtime line, while newer Python versions use the current runtime line. ExecuTorch
+and quantization backends remain optional follow-up deployment layers rather than
+dependencies of the training core.
 
 ## Docker and CUDA
 
@@ -191,9 +196,9 @@ tests/         unit, integration, and smoke tests
 
 Near-term work:
 
-1. add the modern `torch.export`-based ONNX exporter with ONNX Runtime parity tests;
-2. add runtime/latency benchmark helpers around exported artifacts;
-3. evaluate static type checking after the typed Hydra boundary settles.
+1. add runtime/latency benchmark helpers around exported artifacts;
+2. evaluate static type checking after the typed Hydra boundary settles;
+3. add optional ExecuTorch and torchao/PT2E recipes only where a validated backend exists.
 
 Later, optional deployment recipes can add ExecuTorch and torchao/PT2E where a
 validated backend exists. Fabric, FSDP2/DTensor, and Distributed Checkpoint are not
