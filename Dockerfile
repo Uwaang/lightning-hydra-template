@@ -8,7 +8,6 @@ ARG INSTALL_OPTIONAL=true
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
-    UV_PYTHON=/opt/conda/bin/python \
     UV_NO_CACHE=1
 
 COPY --from=ghcr.io/astral-sh/uv:0.12.17 /uv /uvx /bin/
