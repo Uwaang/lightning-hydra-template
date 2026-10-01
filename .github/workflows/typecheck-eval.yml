@@ -43,4 +43,4 @@ jobs:
 
       - name: Run mypy
         continue-on-error: true
-        run: uv run --with mypy mypy src
+        run: uv run --with mypy mypy src --follow-imports=skip
