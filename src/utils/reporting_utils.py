@@ -97,7 +97,7 @@ def _save_confusion_matrix_figure(
                 text_value,
                 ha="center",
                 va="center",
-                color="white" if value > threshold else "black",
+                color="white" if float(raw_value) > threshold else "black",
             )
 
     figure.tight_layout()
