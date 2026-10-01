@@ -1,6 +1,6 @@
 import logging
 from collections.abc import Mapping
-from typing import Optional
+from typing import Any
 
 from lightning_utilities.core.rank_zero import rank_prefixed_message, rank_zero_only
 
@@ -14,41 +14,39 @@ class RankedLogger(logging.LoggerAdapter):
         rank_zero_only: bool = False,
         extra: Mapping[str, object] | None = None,
     ) -> None:
-        """Initializes a multi-GPU-friendly python command line logger that logs on all processes
-        with their rank prefixed in the log message.
+        """Initialize a multi-GPU-friendly command line logger.
 
-        :param name: The name of the logger. Default is ``__name__``.
+        :param name: The name of the logger. Default is __name__.
         :param rank_zero_only: Whether to force all logs to only occur on the rank zero process.
-            Default is `False`.
-        :param extra: (Optional) A dict-like object which provides contextual information. See
-            `logging.LoggerAdapter`.
+            Default is False.
+        :param extra: Optional contextual information forwarded to logging.LoggerAdapter.
         """
         logger = logging.getLogger(name)
         super().__init__(logger=logger, extra=extra)
         self.rank_zero_only = rank_zero_only
 
-    def log(self, level: int, msg: str, rank: int | None = None, *args, **kwargs) -> None:
-        """Delegate a log call to the underlying logger, after prefixing its message with the rank
-        of the process it's being logged from. If `'rank'` is provided, then the log will only
-        occur on that rank/process.
+    def log(self, level: int, msg: object, *args: object, **kwargs: Any) -> None:
+        """Delegate a log call after prefixing the message with the current rank.
 
-        :param level: The level to log at. Look at `logging.__init__.py` for more information.
-        :param msg: The message to log.
-        :param rank: The rank to log at.
-        :param args: Additional args to pass to the underlying logging function.
-        :param kwargs: Any additional keyword args to pass to the underlying logging function.
+        A custom rank=<int> keyword remains supported and filters the record to that process. The
+        keyword is removed before delegating to the standard logging implementation.
         """
-        if self.isEnabledFor(level):
-            msg, kwargs = self.process(msg, kwargs)
-            current_rank = getattr(rank_zero_only, "rank", None)
-            if current_rank is None:
-                raise RuntimeError("The `rank_zero_only.rank` needs to be set before use")
-            msg = rank_prefixed_message(msg, current_rank)
-            if self.rank_zero_only:
-                if current_rank == 0:
-                    self.logger.log(level, msg, *args, **kwargs)
-            else:
-                if rank is None:
-                    self.logger.log(level, msg, *args, **kwargs)
-                elif current_rank == rank:
-                    self.logger.log(level, msg, *args, **kwargs)
+        if not self.isEnabledFor(level):
+            return
+
+        target_rank = kwargs.pop("rank", None)
+        if target_rank is not None and not isinstance(target_rank, int):
+            raise TypeError("rank must be an int or None")
+
+        msg, processed_kwargs = self.process(msg, kwargs)
+        current_rank = getattr(rank_zero_only, "rank", None)
+        if current_rank is None:
+            raise RuntimeError("The rank_zero_only.rank needs to be set before use")
+
+        if self.rank_zero_only and current_rank != 0:
+            return
+        if target_rank is not None and current_rank != target_rank:
+            return
+
+        prefixed_msg = rank_prefixed_message(str(msg), current_rank)
+        self.logger.log(level, prefixed_msg, *args, **processed_kwargs)

@@ -13,7 +13,7 @@ def _import_h5py() -> Any:
     except ImportError as exc:
         raise ImportError(
             "HDF5 support requires the optional vision dependencies. "
-            "Install them with 'pip install -r requirements/vision.txt'."
+            "Install them with 'uv sync --extra vision'."
         ) from exc
     return h5py
 
@@ -85,7 +85,7 @@ def write_hdf5_images(
 
             parent, _, dataset_name = normalized.rpartition("/")
             group = handle.require_group(parent) if parent else handle
-            encoded = np.fromfile(path, dtype=np.uint8)
+            encoded: np.ndarray = np.fromfile(path, dtype=np.uint8)
             group.create_dataset(dataset_name, data=encoded)
 
     return output_path
