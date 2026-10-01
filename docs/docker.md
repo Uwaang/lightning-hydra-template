@@ -83,7 +83,7 @@ The image validates at build time that the base contains PyTorch 2.14,
 torchvision 0.29, and a CUDA-compiled torch build. A dedicated Docker smoke
 workflow builds the core image, runs a CPU fast-dev training pass inside that
 CUDA image, then builds the default full image and imports the optional vision,
-model-zoo, interpretability, and sweeps stack whenever Docker or dependency
+model-zoo, interpretability, sweeps, and ONNX stack whenever Docker or dependency
 metadata changes.
 
 Large training data, checkpoints, ONNX files, TensorRT engines, and local
