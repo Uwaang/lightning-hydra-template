@@ -41,3 +41,6 @@ jobs:
 
       - name: Run pre-commit
         run: uv run --no-sync pre-commit run --all-files --show-diff-on-failure
+
+      - name: Run project-local mypy
+        run: uv run --no-sync mypy
