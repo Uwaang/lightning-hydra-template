@@ -70,21 +70,19 @@ def select_prediction_table_rows(
         value = row.get("confidence")
         return float(value) if isinstance(value, (int, float)) else None
 
+    def incorrect_sort_key(row: Mapping[str, Any]) -> tuple[bool, float]:
+        score = confidence(row)
+        return score is None, -(score if score is not None else 0.0)
+
+    def remaining_sort_key(row: Mapping[str, Any]) -> tuple[bool, float]:
+        score = confidence(row)
+        return score is None, score if score is not None else 0.0
+
     incorrect = [row for row in rows if row.get("correct") is False]
-    incorrect.sort(
-        key=lambda row: (
-            confidence(row) is None,
-            -(confidence(row) if confidence(row) is not None else 0.0),
-        )
-    )
+    incorrect.sort(key=incorrect_sort_key)
 
     remaining = [row for row in rows if row.get("correct") is not False]
-    remaining.sort(
-        key=lambda row: (
-            confidence(row) is None,
-            confidence(row) if confidence(row) is not None else 0.0,
-        )
-    )
+    remaining.sort(key=remaining_sort_key)
 
     return [*incorrect, *remaining][:max_rows]
 
