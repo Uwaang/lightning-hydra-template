@@ -50,16 +50,22 @@ RUN if [ "${INSTALL_OPTIONAL}" = "true" ]; then \
     && /bin/uv pip install --system --break-system-packages --requirement /tmp/locked-requirements.txt \
     && rm -f /tmp/locked-requirements.txt
 
-RUN groupadd --gid "${GROUP_ID}" "${USER_NAME}" \
-    && useradd --uid "${USER_ID}" --gid "${GROUP_ID}" --create-home "${USER_NAME}"
+RUN if ! getent group "${GROUP_ID}" >/dev/null; then \
+      groupadd --gid "${GROUP_ID}" "${USER_NAME}"; \
+    fi \
+    && if ! getent passwd "${USER_ID}" >/dev/null; then \
+      useradd --uid "${USER_ID}" --gid "${GROUP_ID}" --create-home --home-dir "/home/${USER_NAME}" "${USER_NAME}"; \
+    fi \
+    && mkdir -p "/home/${USER_NAME}"
 
 COPY --chown=${USER_ID}:${GROUP_ID} . .
 RUN /bin/uv pip install --system --break-system-packages --no-deps --editable .
 
-RUN mkdir -p /workspace/data /workspace/logs \
-    && chown -R "${USER_ID}:${GROUP_ID}" /workspace
+RUN mkdir -p /workspace/data /workspace/logs "/home/${USER_NAME}" \
+    && chown -R "${USER_ID}:${GROUP_ID}" /workspace "/home/${USER_NAME}"
 
-USER ${USER_NAME}
+ENV HOME=/home/${USER_NAME}
+USER ${USER_ID}:${GROUP_ID}
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["python", "src/train.py"]
