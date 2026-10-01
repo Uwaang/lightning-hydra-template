@@ -1,3 +1,13 @@
+from src.utils.benchmark_utils import (
+    BenchmarkReport,
+    BenchmarkStats,
+    benchmark_callable,
+    benchmark_eager,
+    benchmark_onnx,
+    benchmark_pt2,
+    benchmark_runtime_stack,
+    save_benchmark_report,
+)
 from src.utils.export_utils import export_onnx, export_pt2
 from src.utils.instantiators import instantiate_callbacks, instantiate_loggers
 from src.utils.logging_utils import log_hyperparameters
