@@ -29,6 +29,13 @@ jobs:
         run: |
           docker run --rm lightning-hydra:docker-smoke python -c "import torch, torchvision, lightning, hydra; assert torch.cuda._is_compiled(); assert torch.__version__.startswith('2.14.'); assert torchvision.__version__.startswith('0.29.'); print(torch.__version__, torchvision.__version__, torch.version.cuda)"
 
-      - name: Run CPU fast-dev smoke inside CUDA image
+      - name: Run CPU fast-dev smoke inside core CUDA image
         run: |
           docker run --rm lightning-hydra:docker-smoke python src/train.py trainer=cpu +trainer.fast_dev_run=true
+
+      - name: Build default full CUDA image
+        run: docker build -t lightning-hydra:docker-full .
+
+      - name: Verify optional stack in full image
+        run: |
+          docker run --rm lightning-hydra:docker-full python -c "import albumentations, h5py, cv2, timm, segmentation_models_pytorch, pytorch_grad_cam; import hydra_plugins.hydra_optuna_sweeper; print('optional stack ok')"
