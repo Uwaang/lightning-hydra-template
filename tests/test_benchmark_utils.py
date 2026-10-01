@@ -72,6 +72,7 @@ def test_runtime_stack_pt2_and_json_report(tmp_path: Path) -> None:
         "pytorch_pt2_graph",
     ]
     assert report.input_shapes == [[2, 4]]
+    assert report.model_class.endswith(".TinyBenchmarkModel")
     assert saved_path == report_path
 
     payload = json.loads(report_path.read_text(encoding="utf-8"))
