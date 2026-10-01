@@ -35,12 +35,12 @@ jobs:
 
       - name: Run ty 0.0.84
         continue-on-error: true
-        run: uvx ty@0.0.84 check src
+        run: uv run --with ty==0.0.84 ty check src
 
       - name: Run Pyright
         continue-on-error: true
-        run: uvx pyright src
+        run: uv run --with pyright pyright src
 
       - name: Run mypy
         continue-on-error: true
-        run: uvx mypy src --ignore-missing-imports
+        run: uv run --with mypy mypy src
