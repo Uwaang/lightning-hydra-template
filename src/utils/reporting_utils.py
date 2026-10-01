@@ -44,18 +44,27 @@ def _class_labels(num_classes: int, class_names: list[str] | None) -> list[str]:
     return class_names
 
 
-def _save_matrix_csv(path: Path, matrix: torch.Tensor, labels: list[str]) -> None:
+def _save_matrix_csv(
+    path: Path,
+    matrix: torch.Tensor,
+    labels: list[str],
+    *,
+    normalized: bool = False,
+) -> None:
     with path.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.writer(handle)
         writer.writerow(["target\\pred", *labels])
         for label, row in zip(labels, matrix.tolist(), strict=True):
-            writer.writerow([label, *row])
+            values = [f"{float(value):.6f}" for value in row] if normalized else row
+            writer.writerow([label, *values])
 
 
 def _save_confusion_matrix_figure(
     path: Path,
     matrix: torch.Tensor,
     labels: list[str],
+    *,
+    normalized: bool = False,
 ) -> Path | None:
     try:
         import matplotlib.pyplot as plt
@@ -67,7 +76,7 @@ def _save_confusion_matrix_figure(
     image = axis.imshow(matrix.numpy(), interpolation="nearest", cmap="Blues")
     figure.colorbar(image, ax=axis)
     axis.set(
-        title="Confusion matrix",
+        title="Normalized confusion matrix" if normalized else "Confusion matrix",
         xlabel="Predicted label",
         ylabel="True label",
         xticks=range(len(labels)),
@@ -80,11 +89,12 @@ def _save_confusion_matrix_figure(
     threshold = float(matrix.max().item()) / 2.0 if matrix.numel() else 0.0
     for row_index in range(matrix.shape[0]):
         for column_index in range(matrix.shape[1]):
-            value = int(matrix[row_index, column_index].item())
+            raw_value = matrix[row_index, column_index].item()
+            text_value = f"{float(raw_value):.2f}" if normalized else str(int(raw_value))
             axis.text(
                 column_index,
                 row_index,
-                str(value),
+                text_value,
                 ha="center",
                 va="center",
                 color="white" if value > threshold else "black",
@@ -237,18 +247,37 @@ def save_classification_report(
     confusion_csv = output_dir / "confusion_matrix.csv"
     _save_matrix_csv(confusion_csv, confusion_matrix, labels)
 
+    support = confusion_matrix.sum(dim=1, keepdim=True).clamp_min(1)
+    normalized_confusion = confusion_matrix.to(torch.float64) / support
+    normalized_confusion_csv = output_dir / "confusion_matrix_normalized.csv"
+    _save_matrix_csv(
+        normalized_confusion_csv,
+        normalized_confusion,
+        labels,
+        normalized=True,
+    )
+
     artifacts = {
         "predictions_csv": predictions_path,
         "classification_report_csv": class_report_csv,
         "classification_report_json": class_report_json,
         "confusion_matrix_csv": confusion_csv,
+        "confusion_matrix_normalized_csv": normalized_confusion_csv,
     }
     confusion_png = _save_confusion_matrix_figure(
         output_dir / "confusion_matrix.png",
         confusion_matrix,
         labels,
     )
+    normalized_confusion_png = _save_confusion_matrix_figure(
+        output_dir / "confusion_matrix_normalized.png",
+        normalized_confusion,
+        labels,
+        normalized=True,
+    )
     if confusion_png is not None:
         artifacts["confusion_matrix_png"] = confusion_png
+    if normalized_confusion_png is not None:
+        artifacts["confusion_matrix_normalized_png"] = normalized_confusion_png
 
     return ClassificationReport(metrics=metrics, rows=report_rows, artifacts=artifacts)
