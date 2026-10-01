@@ -109,11 +109,14 @@ def export_onnx(
     dynamic_shapes: Any | None = None,
     opset_version: int | None = None,
     verify: bool = True,
+    rtol: float = 1e-5,
+    atol: float = 1e-6,
 ) -> torch.onnx.ONNXProgram:
-    """Export a plain inference module with the torch.export-based ONNX exporter.
+    """Export a plain inference module and optionally assert ONNX Runtime parity.
 
-    When verify is enabled, PyTorch verifies the exported program with ONNX Runtime before the
-    returned ONNXProgram is serialized.
+    The modern dynamo exporter captures the model through torch.export. When verification is
+    enabled, torch.onnx.testing.assert_onnx_program compares the ONNX Runtime result against
+    the exported PyTorch program before the ONNXProgram is serialized.
     """
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -130,10 +133,23 @@ def export_onnx(
             dynamo=True,
             dynamic_shapes=dynamic_shapes,
             opset_version=opset_version,
-            verify=verify,
+            verify=False,
         )
         if program is None:
             raise RuntimeError("The dynamo ONNX exporter did not return an ONNXProgram.")
+
+        if verify:
+            from torch.onnx.testing import assert_onnx_program
+
+            assert_onnx_program(
+                program,
+                args=example_args,
+                kwargs=kwargs,
+                rtol=rtol,
+                atol=atol,
+                strategy=None,
+                backend="onnxruntime",
+            )
 
         program.save(path)
         return program
