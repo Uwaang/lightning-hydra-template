@@ -64,11 +64,15 @@ def _single_gpu_nvidia_smi_metrics() -> dict[str, float]:
     }
 
 
-def collect_system_metrics(*, include_nvidia_smi: bool) -> dict[str, float]:
+def collect_system_metrics(
+    *,
+    include_cuda: bool,
+    include_nvidia_smi: bool,
+) -> dict[str, float]:
     """Collect lightweight process/CPU/CUDA metrics without requiring extra dependencies."""
     metrics = _optional_cpu_metrics()
 
-    if torch.cuda.is_available():
+    if include_cuda and torch.cuda.is_available():
         device = torch.cuda.current_device()
         metrics.update(
             {
@@ -131,7 +135,10 @@ class ResearchMonitorCallback(Callback):
             metrics["time/train_epoch_seconds"] = perf_counter() - self._train_epoch_started_at
         if self.log_system_metrics:
             metrics.update(
-                collect_system_metrics(include_nvidia_smi=trainer.num_devices == 1)
+                collect_system_metrics(
+                    include_cuda=trainer.strategy.root_device.type == "cuda",
+                    include_nvidia_smi=trainer.num_devices == 1,
+                )
             )
         self._log(trainer, metrics)
 
