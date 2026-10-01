@@ -42,20 +42,20 @@ RUN if [ "${INSTALL_OPTIONAL}" = "true" ]; then \
     else \
       EXTRA_ARGS=""; \
     fi \
-    && uv export --frozen ${EXTRA_ARGS} \
+    && /bin/uv export --frozen ${EXTRA_ARGS} \
          --no-emit-project \
          --no-emit-package torch \
          --no-emit-package torchvision \
          --format requirements.txt \
          --output-file /tmp/locked-requirements.txt \
-    && uv pip install --system --requirement /tmp/locked-requirements.txt \
+    && /bin/uv pip install --system --requirement /tmp/locked-requirements.txt \
     && rm -f /tmp/locked-requirements.txt
 
 RUN groupadd --gid "${GROUP_ID}" "${USER_NAME}" \
     && useradd --uid "${USER_ID}" --gid "${GROUP_ID}" --create-home "${USER_NAME}"
 
 COPY --chown=${USER_ID}:${GROUP_ID} . .
-RUN uv pip install --system --no-deps --editable .
+RUN /bin/uv pip install --system --no-deps --editable .
 
 RUN mkdir -p /workspace/data /workspace/logs \
     && chown -R "${USER_ID}:${GROUP_ID}" /workspace
