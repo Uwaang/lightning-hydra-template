@@ -9,8 +9,8 @@ from omegaconf import MISSING
 class TrainConfig:
     """Typed schema for stable top-level training options.
 
-    Dynamic Hydra component groups stay typed as ``Any`` so existing ``_target_``
-    composition remains flexible while the stable runtime flags are validated.
+    Dynamic Hydra component groups stay typed as ``Any`` so existing ``_target_`` composition
+    remains flexible while the stable runtime flags are validated.
     """
 
     task_name: str = "train"

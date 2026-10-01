@@ -63,9 +63,8 @@ def export_pt2(
 ) -> torch.export.ExportedProgram:
     """Export an inference module to PT2 and verify eager/runtime parity.
 
-    The model is exported in eval mode, serialized with torch.export.save,
-    loaded back with torch.export.load, and executed through
-    ExportedProgram.module() using the same example inputs.
+    The model is exported in eval mode, serialized with torch.export.save, loaded back with
+    torch.export.load, and executed through ExportedProgram.module() using the same example inputs.
     """
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)

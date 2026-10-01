@@ -40,7 +40,6 @@ def test_eval_config(cfg_eval: DictConfig) -> None:
     hydra.utils.instantiate(cfg_eval.trainer)
 
 
-
 def test_train_schema_rejects_invalid_seed_type() -> None:
     """Structured config should reject invalid values for stable runtime options."""
     with initialize(version_base="1.3", config_path="../configs"):
