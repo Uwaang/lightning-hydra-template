@@ -7,6 +7,8 @@ from typing import Any
 import torch
 from torch import nn
 
+from src.utils.console_utils import configure_windows_stdio
+
 
 def _assert_outputs_close(
     eager_output: Any,
@@ -121,6 +123,7 @@ def export_onnx(
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     kwargs = dict(example_kwargs or {})
+    configure_windows_stdio()
 
     was_training = model.training
     model.eval()

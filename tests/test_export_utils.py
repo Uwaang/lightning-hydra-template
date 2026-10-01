@@ -4,6 +4,7 @@ import pytest
 import torch
 from torch import nn
 
+import src.utils.export_utils as export_utils
 from src.utils.export_utils import export_onnx, export_pt2
 
 
@@ -47,6 +48,34 @@ class TinyOnnxModel(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         return torch.relu(self.linear(x))
+
+
+def test_export_onnx_configures_windows_safe_stdio(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    called = False
+
+    class FakeOnnxProgram:
+        exported_program = object()
+
+        def save(self, path: Path) -> None:
+            Path(path).write_bytes(b"onnx")
+
+    def mark_stdio_configured() -> None:
+        nonlocal called
+        called = True
+
+    monkeypatch.setattr(export_utils, "configure_windows_stdio", mark_stdio_configured)
+    monkeypatch.setattr(torch.onnx, "export", lambda *args, **kwargs: FakeOnnxProgram())
+
+    export_onnx(
+        TinyOnnxModel(),
+        (torch.randn(2, 4),),
+        tmp_path / "tiny_model.onnx",
+        verify=False,
+    )
+
+    assert called
 
 
 def test_export_onnx_roundtrip_and_restore_mode(tmp_path: Path) -> None:

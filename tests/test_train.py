@@ -1,12 +1,35 @@
 import os
 from pathlib import Path
 
+import hydra
 import pytest
+import torch
 from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig, open_dict
 
 from src.train import train
 from tests.helpers.run_if import RunIf
+
+
+def test_mnist_checkpoint_metadata_is_weights_only_safe(
+    tmp_path: Path, cfg_train: DictConfig
+) -> None:
+    """Hydra-composed model/datamodule hparams should not require unsafe pickle globals."""
+    model = hydra.utils.instantiate(cfg_train.model)
+    datamodule = hydra.utils.instantiate(cfg_train.data)
+    checkpoint_path = tmp_path / "metadata.ckpt"
+    torch.save(
+        {
+            "hyper_parameters": dict(model.hparams),
+            "datamodule_hyper_parameters": dict(datamodule.hparams),
+        },
+        checkpoint_path,
+    )
+
+    loaded = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
+
+    assert loaded["hyper_parameters"] == {"compile": False}
+    assert loaded["datamodule_hyper_parameters"]["train_val_test_split"] == (55_000, 5_000, 10_000)
 
 
 def test_train_fast_dev_run(cfg_train: DictConfig) -> None:
