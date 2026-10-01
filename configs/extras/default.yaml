@@ -18,3 +18,14 @@ state_dict:
 # prediction export
 predictions:
   output_format: "json"
+
+# research-friendly reporting when a logger is configured
+reporting:
+  enabled: True
+  top_k: 3
+  class_names: null
+  log_metadata: True
+  log_state_dicts: True
+  log_best_checkpoint: True
+  log_prediction_table: True
+  log_existing_exports: True

@@ -179,6 +179,17 @@ The PT2 result is named `pytorch_pt2_graph` intentionally: loading an
 is deferred until the PyTorch and ONNX Runtime paths can use comparable GPU execution
 providers and correct asynchronous timing.
 
+## Experiment reporting
+
+With a logger configured, training can produce research-oriented reports in addition to
+scalar curves: confusion matrices, per-class metrics, sample-level prediction tables,
+checkpoints/state dicts, and reproducibility metadata. MLflow runs receive these files as
+artifacts. Existing PT2/ONNX/benchmark output directories are publishable without making
+deployment export a mandatory part of training.
+
+See [docs/experiment-reporting.md](docs/experiment-reporting.md) for the artifact layout
+and reporting controls.
+
 ## Docker and CUDA
 
 The CUDA path uses the official PyTorch runtime image and keeps the container process
