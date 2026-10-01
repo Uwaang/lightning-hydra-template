@@ -44,9 +44,7 @@ def _fallback_fingerprint_payload(
     split_sizes: dict[str, int],
 ) -> dict[str, Any]:
     excluded = {"data_dir", "root", "path", "batch_size", "num_workers", "pin_memory"}
-    fingerprint_hparams = {
-        key: value for key, value in hparams.items() if key not in excluded
-    }
+    fingerprint_hparams = {key: value for key, value in hparams.items() if key not in excluded}
     return {
         "datamodule": f"{datamodule.__class__.__module__}.{datamodule.__class__.__qualname__}",
         "hparams": fingerprint_hparams,
@@ -57,9 +55,9 @@ def _fallback_fingerprint_payload(
 def build_dataset_provenance(datamodule: LightningDataModule) -> dict[str, Any]:
     """Build a stable dataset/configuration provenance record.
 
-    The default fingerprint covers dataset identity/configuration and split policy, not
-    the raw bytes of every sample. Datamodules can provide a dataset_provenance method
-    to define a more precise domain-specific identity payload.
+    The default fingerprint covers dataset identity/configuration and split policy, not the raw
+    bytes of every sample. Datamodules can provide a dataset_provenance method to define a more
+    precise domain-specific identity payload.
     """
     hparams = _json_safe(dict(getattr(datamodule, "hparams", {})))
     if not isinstance(hparams, dict):
