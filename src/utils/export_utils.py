@@ -98,3 +98,44 @@ def export_pt2(
         return loaded_program
     finally:
         model.train(was_training)
+
+
+def export_onnx(
+    model: nn.Module,
+    example_args: tuple[Any, ...],
+    output_path: str | Path,
+    *,
+    example_kwargs: Mapping[str, Any] | None = None,
+    dynamic_shapes: Any | None = None,
+    opset_version: int | None = None,
+    verify: bool = True,
+) -> torch.onnx.ONNXProgram:
+    """Export a plain inference module with the torch.export-based ONNX exporter.
+
+    When verify is enabled, PyTorch verifies the exported program with ONNX Runtime before the
+    returned ONNXProgram is serialized.
+    """
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    kwargs = dict(example_kwargs or {})
+
+    was_training = model.training
+    model.eval()
+    try:
+        program = torch.onnx.export(
+            model,
+            args=example_args,
+            kwargs=kwargs,
+            f=None,
+            dynamo=True,
+            dynamic_shapes=dynamic_shapes,
+            opset_version=opset_version,
+            verify=verify,
+        )
+        if program is None:
+            raise RuntimeError("The dynamo ONNX exporter did not return an ONNXProgram.")
+
+        program.save(path)
+        return program
+    finally:
+        model.train(was_training)

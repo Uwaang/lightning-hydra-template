@@ -38,4 +38,4 @@ jobs:
 
       - name: Verify optional stack in full image
         run: |
-          docker run --rm lightning-hydra:docker-full python -c "import albumentations, h5py, cv2, timm, segmentation_models_pytorch, pytorch_grad_cam; import hydra_plugins.hydra_optuna_sweeper; print('optional stack ok')"
+          docker run --rm lightning-hydra:docker-full python -c "import albumentations, h5py, cv2, timm, segmentation_models_pytorch, pytorch_grad_cam, onnx, onnxruntime, onnxscript; import hydra_plugins.hydra_optuna_sweeper; print('optional stack ok')"

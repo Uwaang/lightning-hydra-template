@@ -1,4 +1,4 @@
-from src.utils.export_utils import export_pt2
+from src.utils.export_utils import export_onnx, export_pt2
 from src.utils.instantiators import instantiate_callbacks, instantiate_loggers
 from src.utils.logging_utils import log_hyperparameters
 from src.utils.metadata_utils import log_run_metadata
