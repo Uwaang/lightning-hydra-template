@@ -76,7 +76,7 @@ The CUDA-enabled image can also execute the CPU configuration:
 
 ```bash
 docker run --rm lightning-hydra:dev \
-  python src/train.py trainer=cpu trainer.fast_dev_run=true
+  python src/train.py trainer=cpu +trainer.fast_dev_run=true
 ```
 
 The image validates at build time that the base contains PyTorch 2.14,

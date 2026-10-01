@@ -42,7 +42,7 @@ uv sync
 Run the default MNIST smoke path:
 
 ```bash
-uv run train-command trainer=cpu trainer.fast_dev_run=true
+uv run train-command trainer=cpu +trainer.fast_dev_run=true
 ```
 
 Run the test suite:
@@ -152,10 +152,10 @@ make docker-train
 See [docs/docker.md](docs/docker.md) for image arguments, bind mounts, and runtime
 examples.
 
-The Dockerfile still uses the transitional pip/requirements installation path. It is
-being kept until the CPU/CUDA uv dependency strategy is validated end-to-end; removing
-`requirements/*.txt` before that would risk replacing the CUDA PyTorch build with the
-CPU-locked wheel.
+Docker dependencies are derived from `uv.lock`. The official CUDA base image owns
+`torch` and `torchvision`, while `uv export` installs the rest of the locked graph
+without replacing those CUDA-enabled builds. A Docker smoke workflow verifies the image,
+the CUDA-compiled PyTorch build, and a CPU fast-dev training pass.
 
 ## Development
 
@@ -173,7 +173,7 @@ make train
 
 CI currently covers Python 3.10, 3.11, and 3.12 across Linux, plus Python 3.12 on
 Windows and macOS. Separate jobs exercise the optional vision and full-stack
-environments.
+environments, and dependency/Docker changes trigger a CUDA-image smoke build.
 
 ## Repository layout
 
@@ -191,11 +191,9 @@ tests/         unit, integration, and smoke tests
 
 Near-term work:
 
-1. finish the uv-based developer and documentation cleanup;
-2. design and validate a CUDA-safe uv installation path;
-3. remove transitional `setup.py` and `requirements/*.txt` only after the Docker
-   path is migrated;
-4. add the modern `torch.export`-based ONNX exporter with ONNX Runtime parity tests.
+1. add the modern `torch.export`-based ONNX exporter with ONNX Runtime parity tests;
+2. add runtime/latency benchmark helpers around exported artifacts;
+3. evaluate static type checking after the typed Hydra boundary settles.
 
 Later, optional deployment recipes can add ExecuTorch and torchao/PT2E where a
 validated backend exists. Fabric, FSDP2/DTensor, and Distributed Checkpoint are not
