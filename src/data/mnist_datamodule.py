@@ -98,6 +98,15 @@ class MNISTDataModule(LightningDataModule):
         """
         return 10
 
+    def dataset_provenance(self) -> dict[str, Any]:
+        """Return the stable MNIST identity and split policy used for fingerprinting."""
+        return {
+            "dataset": "torchvision.datasets.MNIST",
+            "split_seed": 42,
+            "split_lengths": list(self.hparams.train_val_test_split),
+            "transform": repr(self.transforms),
+        }
+
     def prepare_data(self) -> None:
         """Download data if needed. Lightning ensures that `self.prepare_data()` is called only
         within a single process on CPU, so you can safely add your downloading logic within. In

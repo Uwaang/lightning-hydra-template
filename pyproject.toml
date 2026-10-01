@@ -39,6 +39,9 @@ sweeps = [
   "hydra-optuna-sweeper==1.2.0",
   "optuna==2.10.1",
 ]
+tracking = [
+  "mlflow>=3.16,<4",
+]
 onnx = [
   "onnx>=1.23.1,<1.24",
   "onnxscript>=0.7.2,<0.8",
@@ -54,6 +57,7 @@ all = [
   "grad-cam>=1.5.7,<2",
   "hydra-optuna-sweeper==1.2.0",
   "optuna==2.10.1",
+  "mlflow>=3.16,<4",
   "onnx>=1.23.1,<1.24",
   "onnxscript>=0.7.2,<0.8",
   "onnxruntime==1.23.2; python_version < '3.11'",

@@ -57,14 +57,46 @@ def publish_mlflow_artifacts(
                     client.log_artifact(run_id, str(path), artifact_path=artifact_path)
 
 
+def select_prediction_table_rows(
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    max_rows: int,
+) -> list[Mapping[str, Any]]:
+    """Select a bounded error-analysis view while preserving full predictions elsewhere."""
+    if max_rows < 1:
+        return []
+
+    def confidence(row: Mapping[str, Any]) -> float | None:
+        value = row.get("confidence")
+        return float(value) if isinstance(value, (int, float)) else None
+
+    def incorrect_sort_key(row: Mapping[str, Any]) -> tuple[bool, float]:
+        score = confidence(row)
+        return score is None, -(score if score is not None else 0.0)
+
+    def remaining_sort_key(row: Mapping[str, Any]) -> tuple[bool, float]:
+        score = confidence(row)
+        return score is None, score if score is not None else 0.0
+
+    incorrect = [row for row in rows if row.get("correct") is False]
+    incorrect.sort(key=incorrect_sort_key)
+
+    remaining = [row for row in rows if row.get("correct") is not False]
+    remaining.sort(key=remaining_sort_key)
+
+    return [*incorrect, *remaining][:max_rows]
+
+
 def log_prediction_table_to_mlflow(
     loggers: Sequence[Logger],
     rows: Sequence[Mapping[str, Any]],
     *,
     artifact_file: str,
+    max_rows: int = 500,
 ) -> None:
-    """Log a directly viewable prediction table to MLflow when available."""
-    if not rows:
+    """Log a bounded, directly viewable prediction table to MLflow when available."""
+    selected_rows = select_prediction_table_rows(rows, max_rows=max_rows)
+    if not selected_rows:
         return
 
     preferred_columns = [
@@ -76,8 +108,10 @@ def log_prediction_table_to_mlflow(
         "correct",
         "top_k",
     ]
-    columns = [column for column in preferred_columns if any(column in row for row in rows)]
-    data = [[row.get(column) for column in columns] for row in rows]
+    columns = [
+        column for column in preferred_columns if any(column in row for row in selected_rows)
+    ]
+    data = [[row.get(column) for column in columns] for row in selected_rows]
 
     for logger in loggers:
         handles = _mlflow_handles(logger)

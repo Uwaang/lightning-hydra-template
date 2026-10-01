@@ -6,6 +6,7 @@ import lightning as L
 import rootutils
 import torch
 from lightning import Callback, LightningDataModule, LightningModule, Trainer
+from lightning.pytorch.callbacks import LearningRateMonitor
 from lightning.pytorch.loggers import Logger
 from omegaconf import DictConfig
 
@@ -34,6 +35,7 @@ register_configs()
 
 from src.utils import (
     RankedLogger,
+    ResearchMonitorCallback,
     extras,
     get_metric_value,
     instantiate_callbacks,
@@ -44,6 +46,7 @@ from src.utils import (
     log_run_metadata,
     publish_mlflow_artifacts,
     save_classification_report,
+    save_dataset_provenance,
     save_state_dicts,
     task_wrapper,
 )
@@ -79,6 +82,23 @@ def train(cfg: DictConfig) -> tuple[dict[str, Any], dict[str, Any]]:
     log.info("Instantiating loggers...")
     logger: list[Logger] = instantiate_loggers(cfg.get("logger"))
 
+    reporting_cfg = cfg.extras.get("reporting", {}) if cfg.get("extras") else {}
+    reporting_requested = bool(logger and reporting_cfg.get("enabled", False))
+    if reporting_requested:
+        if reporting_cfg.get("log_learning_rate", True) and not any(
+            isinstance(callback, LearningRateMonitor) for callback in callbacks
+        ):
+            callbacks.append(LearningRateMonitor(logging_interval="epoch"))
+        if reporting_cfg.get("log_epoch_time", True) or reporting_cfg.get(
+            "log_system_metrics", True
+        ):
+            callbacks.append(
+                ResearchMonitorCallback(
+                    log_epoch_time=bool(reporting_cfg.get("log_epoch_time", True)),
+                    log_system_metrics=bool(reporting_cfg.get("log_system_metrics", True)),
+                )
+            )
+
     log.info(f"Instantiating trainer <{cfg.trainer._target_}>")
     trainer: Trainer = hydra.utils.instantiate(cfg.trainer, callbacks=callbacks, logger=logger)
 
@@ -91,11 +111,9 @@ def train(cfg: DictConfig) -> tuple[dict[str, Any], dict[str, Any]]:
         "trainer": trainer,
     }
 
-    reporting_cfg = cfg.extras.get("reporting", {}) if cfg.get("extras") else {}
-    reporting_enabled = bool(
-        logger and reporting_cfg.get("enabled", False) and not trainer.fast_dev_run
-    )
+    reporting_enabled = bool(reporting_requested and not trainer.fast_dev_run)
     artifact_groups: dict[str, list[Path]] = {}
+    metadata_dir: Path | None = None
 
     if logger:
         log.info("Logging hyperparameters!")
@@ -143,6 +161,21 @@ def train(cfg: DictConfig) -> tuple[dict[str, Any], dict[str, Any]]:
     test_metrics = dict(trainer.callback_metrics)
     report_metrics: dict[str, float] = {}
 
+    if reporting_enabled and reporting_cfg.get("log_dataset_provenance", True):
+        provenance_path, provenance = save_dataset_provenance(
+            datamodule,
+            Path(cfg.paths.output_dir) / "metadata",
+        )
+        for logger_instance in trainer.loggers:
+            logger_instance.log_hyperparams(
+                {
+                    "data/fingerprint": provenance["fingerprint"],
+                    "data/fingerprint_scope": provenance["fingerprint_scope"],
+                }
+            )
+        if metadata_dir is None:
+            artifact_groups.setdefault("metadata", []).append(provenance_path)
+
     if reporting_enabled and cfg.get("test"):
         log.info("Generating classification research report!")
         predictions = trainer.predict(
@@ -175,6 +208,7 @@ def train(cfg: DictConfig) -> tuple[dict[str, Any], dict[str, Any]]:
                     trainer.loggers,
                     report.rows,
                     artifact_file="reports/test/predictions_table.json",
+                    max_rows=int(reporting_cfg.get("prediction_table_max_rows", 500)),
                 )
 
     if reporting_enabled:

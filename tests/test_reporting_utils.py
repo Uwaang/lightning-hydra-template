@@ -8,6 +8,7 @@ import torch
 from src.utils.mlflow_utils import (
     log_prediction_table_to_mlflow,
     publish_mlflow_artifacts,
+    select_prediction_table_rows,
 )
 from src.utils.reporting_utils import save_classification_report
 
@@ -47,6 +48,15 @@ def test_save_classification_report(tmp_path: Path) -> None:
         ["target\\pred", "negative", "positive"],
         ["negative", "1", "1"],
         ["positive", "0", "1"],
+    ]
+
+    normalized_path = report.artifacts["confusion_matrix_normalized_csv"]
+    with normalized_path.open(encoding="utf-8", newline="") as handle:
+        normalized_rows = list(csv.reader(handle))
+    assert normalized_rows == [
+        ["target\\pred", "negative", "positive"],
+        ["negative", "0.500000", "0.500000"],
+        ["positive", "0.000000", "1.000000"],
     ]
 
     payload = json.loads(
@@ -99,3 +109,17 @@ def test_mlflow_artifact_and_prediction_table_publish(tmp_path: Path) -> None:
     assert client.tables[0][0] == "run-123"
     assert client.tables[0][2] == "reports/test/predictions_table.json"
     assert client.tables[0][1]["columns"] == ["sample_index", "target", "pred", "correct"]
+
+
+def test_select_prediction_table_rows_prioritizes_errors_then_uncertain() -> None:
+    rows = [
+        {"sample_index": 0, "correct": True, "confidence": 0.99},
+        {"sample_index": 1, "correct": False, "confidence": 0.70},
+        {"sample_index": 2, "correct": True, "confidence": 0.40},
+        {"sample_index": 3, "correct": False, "confidence": 0.95},
+        {"sample_index": 4, "correct": True, "confidence": 0.60},
+    ]
+
+    selected = select_prediction_table_rows(rows, max_rows=3)
+
+    assert [row["sample_index"] for row in selected] == [3, 1, 2]
