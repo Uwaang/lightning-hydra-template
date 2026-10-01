@@ -47,7 +47,7 @@ RUN if [ "${INSTALL_OPTIONAL}" = "true" ]; then \
          --no-emit-package torchvision \
          --format requirements.txt \
          --output-file /tmp/locked-requirements.txt \
-    && /bin/uv pip install --system --break-system-packages --requirement /tmp/locked-requirements.txt \
+    && /bin/uv pip install --system --break-system-packages --no-deps --requirement /tmp/locked-requirements.txt \
     && rm -f /tmp/locked-requirements.txt
 
 RUN if ! getent group "${GROUP_ID}" >/dev/null; then \
