@@ -1,4 +1,4 @@
-# Run all pre-commit hooks against the complete repository on main.
+# Run all quality checks against the complete repository on main.
 
 name: Code Quality Main
 
@@ -9,6 +9,9 @@ on:
 permissions:
   contents: read
 
+env:
+  UV_FROZEN: "1"
+
 jobs:
   code-quality:
     runs-on: ubuntu-latest
@@ -17,14 +20,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Set up Python
-        uses: actions/setup-python@v7
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
-          python-version: "3.12"
-          cache: pip
+          version: "0.12.17"
+          enable-cache: true
 
-      - name: Install pre-commit
-        run: python -m pip install "pre-commit>=4.6,<5"
+      - name: Install Python
+        run: uv python install 3.12
+
+      - name: Check lockfile freshness
+        run: uv lock --check
+
+      - name: Install quality tools
+        run: uv sync --python 3.12 --only-group dev
 
       - name: Run pre-commit
-        run: pre-commit run --all-files --show-diff-on-failure
+        run: uv run --no-sync pre-commit run --all-files --show-diff-on-failure

@@ -4,8 +4,8 @@ import os
 import shutil
 import subprocess  # nosec B404 - fixed argv metadata commands, never shell=True
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 from lightning_utilities.core.rank_zero import rank_zero_only
 from omegaconf import DictConfig

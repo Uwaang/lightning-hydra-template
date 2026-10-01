@@ -1,5 +1,8 @@
 import hydra
+import pytest
+from hydra import compose, initialize
 from hydra.core.hydra_config import HydraConfig
+from hydra.errors import ConfigCompositionException
 from omegaconf import DictConfig
 
 
@@ -35,3 +38,10 @@ def test_eval_config(cfg_eval: DictConfig) -> None:
     hydra.utils.instantiate(cfg_eval.data)
     hydra.utils.instantiate(cfg_eval.model)
     hydra.utils.instantiate(cfg_eval.trainer)
+
+
+def test_train_schema_rejects_invalid_seed_type() -> None:
+    """Structured config should reject invalid values for stable runtime options."""
+    with initialize(version_base="1.3", config_path="../configs"):
+        with pytest.raises(ConfigCompositionException):
+            compose(config_name="train.yaml", overrides=["seed=not-an-int"])

@@ -1,90 +1,63 @@
 # Validation guide
 
-Use this checklist before marking the full integration PR ready for review.
+Use this checklist before marking a modernization PR ready for review.
 
-## Current PR #12 status
+## 1. Locked CPU environment
 
-The integration candidate has completed its planned merge gates:
+The project uses `pyproject.toml + uv.lock` as the dependency source of truth.
+The default lock resolves the CPU PyTorch wheels.
 
-- [x] full non-slow CPU suite;
-- [x] Hydra basic sweep;
-- [x] Optuna three-trial sweep;
-- [x] cross-platform GitHub Actions;
-- [x] full optional-dependency CI;
-- [x] Code Quality PR;
-- [x] CUDA `fast_dev_run` on a GTX 1660;
-- [x] license/provenance review.
-
-A full Docker image build/run remains useful as a post-merge smoke test, but it
-is not a blocking merge criterion.
-
-## 1. Full CPU environment
-
-Create an isolated environment and install the target CPU PyTorch stack:
+Install the full optional stack:
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-
-python -m pip install --upgrade pip
-python -m pip install \
-  --index-url https://download.pytorch.org/whl/cpu \
-  "torch>=2.14,<2.15" \
-  "torchvision>=0.29,<0.30"
-
-python -m pip install -r requirements/all.txt
-python -m pip install -e .
+uv sync --all-extras
 ```
 
-Run the ordinary full-stack suite without long-running sweep tests:
+Run the ordinary full-stack suite without slow tests:
 
 ```bash
-python -m pytest -m "not slow" -v
+uv run python -m pytest -m "not slow" -v
 ```
 
 Then run the integration smoke tests:
 
 ```bash
-python -m pytest \
+uv run python -m pytest \
   tests/test_sweeps.py::test_example_experiment \
   tests/test_sweeps.py::test_hydra_sweep \
   tests/test_sweeps.py::test_optuna_sweep \
   -v
 ```
 
-## 2. GitHub Actions on this fork
+## 2. GitHub Actions
 
-The Tests workflow supports manual dispatch and is enabled for this fork.
+The Tests workflow covers:
 
-The workflow contains:
-
-- cross-platform core tests on Linux, Windows, and macOS;
-- a vision dependency job;
-- a full optional-dependency job;
+- core tests on Linux Python 3.10, 3.11, and 3.12;
+- core tests on Windows and macOS with Python 3.12;
+- the optional vision environment;
+- ONNX export/runtime parity on Python 3.10 and 3.12;
+- the full optional-dependency environment;
 - selected Hydra/Optuna integration smoke tests;
 - coverage collection.
 
-PR #12 also runs the Code Quality PR workflow, which covers formatting,
-docstring coverage, Flake8, Bandit, YAML/Markdown formatting, ShellCheck,
-codespell, and nbQA.
+Code Quality PR runs the repository's pre-commit stack, including Ruff lint and
+format checks plus the retained documentation, security, YAML/Markdown,
+ShellCheck, and spelling checks.
 
-## 3. CUDA smoke test
+Dependency or Docker changes also run Docker Smoke. That workflow:
 
-After CPU tests pass, verify the target machine's NVIDIA driver and run at least
-the MNIST path on one GPU:
+1. builds the core image from the official CUDA-enabled PyTorch base;
+2. verifies that CUDA-compiled PyTorch 2.14 and torchvision 0.29 were preserved;
+3. runs a CPU `fast_dev_run` inside the CUDA image;
+4. builds the default full optional image;
+5. imports the optional vision, model-zoo, interpretability, and sweeps stack.
 
-```bash
-python src/train.py \
-  trainer=gpu \
-  ++trainer.fast_dev_run=true \
-  logger=[]
-```
+## 3. CUDA runtime smoke
 
-PR #12 was validated on a GeForce GTX 1660 with PyTorch 2.14.0+cu130,
-torchvision 0.29.0+cu130, and CUDA runtime 13.0. Lightning selected GPU 0 and
-completed train, validation, and test with exit code 0.
-
-For Docker:
+GitHub-hosted Docker smoke validates that the image contains a CUDA-compiled
+PyTorch build, but it does not provide a physical NVIDIA GPU. Before a release
+that materially changes CUDA behavior, run at least one real GPU smoke test:
 
 ```bash
 docker build -t lightning-hydra:dev .
@@ -93,8 +66,11 @@ docker run --rm --gpus all --ipc=host \
   -v "$PWD/data:/workspace/data" \
   -v "$PWD/logs:/workspace/logs" \
   lightning-hydra:dev \
-  python src/train.py trainer=gpu ++trainer.fast_dev_run=true logger=[]
+  python src/train.py trainer=gpu +trainer.fast_dev_run=true
 ```
+
+The integrated PyTorch 2.14 stack was previously validated on a GeForce GTX 1660
+with PyTorch 2.14.0+cu130, torchvision 0.29.0+cu130, and CUDA runtime 13.0.
 
 ## 4. Feature experiments
 
@@ -102,10 +78,10 @@ The shipped image experiments compose in CI without requiring user data.
 End-to-end runs require manifests under the configured `data/` paths:
 
 ```bash
-python src/train.py experiment=image_classification
-python src/train.py experiment=image_multitask
-python src/train.py experiment=image_reid
-python src/train.py experiment=image_vicreg
+uv run train-command experiment=image_classification
+uv run train-command experiment=image_multitask
+uv run train-command experiment=image_reid
+uv run train-command experiment=image_vicreg
 ```
 
 See the corresponding files in `docs/` for manifest layout and task-specific
@@ -113,9 +89,10 @@ settings.
 
 ## Ready-to-merge criteria
 
-- [x] full non-slow CPU suite passes;
-- [x] Hydra basic and Optuna smoke tests pass;
-- [x] at least one CUDA fast-dev run passes;
-- [x] no unresolved license/provenance concern;
-- [x] original ashleve MIT notice is preserved;
-- [x] Tests and Code Quality PR workflows are green.
+- [ ] locked core and full optional test matrices are green;
+- [ ] Code Quality PR is green;
+- [ ] Docker Smoke is green when packaging or Docker files changed;
+- [ ] PT2 and ONNX exported-artifact tests are green when deployment code changed;
+- [ ] no unresolved license/provenance concern;
+- [ ] original ashleve MIT notice is preserved;
+- [ ] a real GPU smoke has been run when CUDA behavior materially changed.

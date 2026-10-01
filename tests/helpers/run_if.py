@@ -2,7 +2,7 @@
 
 import sys
 from importlib.metadata import version
-from typing import Any, Dict, Optional
+from typing import Any
 
 import pytest
 import torch
@@ -29,9 +29,9 @@ class RunIf:
     def __new__(
         cls,
         min_gpus: int = 0,
-        min_torch: Optional[str] = None,
-        max_torch: Optional[str] = None,
-        min_python: Optional[str] = None,
+        min_torch: str | None = None,
+        max_torch: str | None = None,
+        min_python: str | None = None,
         skip_windows: bool = False,
         sh: bool = False,
         tpu: bool = False,
@@ -42,7 +42,7 @@ class RunIf:
         comet: bool = False,
         mlflow: bool = False,
         optuna_sweeper: bool = False,
-        **kwargs: Dict[Any, Any],
+        **kwargs: dict[Any, Any],
     ) -> MarkDecorator:
         """Create a new pytest skip marker from runtime requirements."""
         conditions = []

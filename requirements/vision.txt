@@ -1,5 +1,0 @@
--r ../requirements.txt
-
-albumentations>=2.0,<3
-h5py>=3.11,<4
-opencv-python-headless>=4.10,<5

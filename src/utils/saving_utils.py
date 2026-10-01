@@ -3,8 +3,9 @@ from __future__ import annotations
 import csv
 import json
 from collections import OrderedDict
+from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any
 
 import torch
 from lightning import LightningModule, Trainer
