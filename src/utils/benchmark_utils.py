@@ -42,6 +42,7 @@ class BenchmarkReport:
     schema_version: int
     created_at_utc: str
     device: str
+    model_class: str
     input_shapes: list[list[int]]
     environment: dict[str, str]
     results: list[BenchmarkStats]
@@ -282,10 +283,14 @@ def benchmark_runtime_stack(
         schema_version=1,
         created_at_utc=datetime.now(timezone.utc).isoformat(),
         device="cpu",
+        model_class=f"{model.__class__.__module__}.{model.__class__.__qualname__}",
         input_shapes=input_shapes,
         environment={
             "python": platform.python_version(),
             "platform": platform.platform(),
+            "machine": platform.machine(),
+            "processor": platform.processor() or "unknown",
+            "logical_cpu_count": str(__import__("os").cpu_count() or "unknown"),
             "torch": str(torch.__version__),
             "onnxruntime": _package_version("onnxruntime"),
         },
