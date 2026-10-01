@@ -21,8 +21,10 @@ docker build \
 
 ## Full-stack build
 
-The default image installs the core requirements plus the optional vision,
-model-zoo, HDF5, and Grad-CAM dependencies from `requirements/all.txt`.
+The default image installs the locked project dependencies from `uv.lock` plus the
+optional `all` feature set. The official PyTorch CUDA base image remains the owner
+of `torch` and `torchvision`: those two packages are deliberately excluded from
+the exported CPU lock requirements so uv cannot replace the CUDA-enabled builds.
 
 ```bash
 docker build -t lightning-hydra:dev .
@@ -76,6 +78,11 @@ The CUDA-enabled image can also execute the CPU configuration:
 docker run --rm lightning-hydra:dev \
   python src/train.py trainer=cpu trainer.fast_dev_run=true
 ```
+
+The image validates at build time that the base contains PyTorch 2.14,
+torchvision 0.29, and a CUDA-compiled torch build. A dedicated Docker smoke
+workflow also builds the core image and runs a CPU fast-dev training pass inside
+that CUDA image whenever Docker or dependency metadata changes.
 
 Large training data, checkpoints, ONNX files, TensorRT engines, and local
 environment files are excluded from the Docker build context by default.

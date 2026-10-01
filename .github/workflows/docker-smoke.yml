@@ -1,0 +1,34 @@
+name: Docker Smoke
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - Dockerfile
+      - pyproject.toml
+      - uv.lock
+      - .github/workflows/docker-smoke.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docker-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Build core CUDA image
+        run: docker build --build-arg INSTALL_OPTIONAL=false -t lightning-hydra:docker-smoke .
+
+      - name: Verify CUDA PyTorch is preserved
+        run: |
+          docker run --rm lightning-hydra:docker-smoke python -c "import torch, torchvision, lightning, hydra; assert torch.cuda._is_compiled(); assert torch.__version__.startswith('2.14.'); assert torchvision.__version__.startswith('0.29.'); print(torch.__version__, torchvision.__version__, torch.version.cuda)"
+
+      - name: Run CPU fast-dev smoke inside CUDA image
+        run: |
+          docker run --rm lightning-hydra:docker-smoke python src/train.py trainer=cpu trainer.fast_dev_run=true logger=null
