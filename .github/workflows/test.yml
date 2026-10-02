@@ -115,9 +115,9 @@ jobs:
       - name: Show ONNX Runtime version
         run: uv run python -c "import onnxruntime; print(onnxruntime.__version__)"
 
-      - name: Run export and runtime benchmark tests
+      - name: Run export, runtime benchmark, and quantization tests
         run: |
-          uv run python -m pytest tests/test_export_utils.py tests/test_benchmark_utils.py -v
+          uv run python -m pytest tests/test_export_utils.py tests/test_benchmark_utils.py tests/test_quantization_utils.py -v
 
   full-stack-tests:
     runs-on: ubuntu-latest
