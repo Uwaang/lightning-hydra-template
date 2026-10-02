@@ -28,7 +28,7 @@ different image batch from the CombinedLoader.
 ## Run
 
 ```bash
-python src/train.py experiment=image_multitask
+uv run train-command experiment=image_multitask
 ```
 
 Edit the `heads` mapping and the matching dataset names together. The example

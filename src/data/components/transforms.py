@@ -17,7 +17,7 @@ class AlbumentationsTransform:
         except ImportError as exc:
             raise ImportError(
                 "AlbumentationsTransform requires the optional vision dependencies. "
-                "Install them with 'pip install -r requirements/vision.txt'."
+                "Install them with 'uv sync --extra vision'."
             ) from exc
 
         self.transform = A.Compose(list(operations))

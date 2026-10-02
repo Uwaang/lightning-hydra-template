@@ -43,7 +43,7 @@ which is generally the useful representation for downstream tasks.
 ## Run
 
 ```bash
-python src/train.py experiment=image_vicreg
+uv run train-command experiment=image_vicreg
 ```
 
 The default example uses a headless torchvision ResNet-18, a 2048-hidden /

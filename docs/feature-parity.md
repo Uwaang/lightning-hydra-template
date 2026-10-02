@@ -28,7 +28,7 @@ ports the useful behavior of
 ## Replaced by existing baseline features
 
 - custom terminal progress bar -> Lightning RichProgressBar
-- custom W&B checkpoint callback -> WandbLogger `log_model`
+- custom W&B checkpoint callback -> standard Lightning checkpoints and project artifact reporting
 - manual random seeding -> Lightning `seed_everything(..., workers=True)`
 - custom metric copies -> maintained TorchMetrics implementations
 - train/eval shell wrappers -> Python entry points and Makefile targets

@@ -24,7 +24,7 @@ Use the same manifest-driven image dataset as ordinary classification, but set
 identity labels to contiguous integer class IDs:
 
 ```bash
-python src/train.py experiment=image_reid model.num_classes=1000
+uv run train-command experiment=image_reid model.num_classes=1000
 ```
 
 The default embedding dimension is 128 and the default objective is CosFace.

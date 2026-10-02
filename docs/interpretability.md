@@ -5,7 +5,7 @@ Grad-CAM support is optional and uses the current `grad-cam` package API.
 ## Install
 
 ```bash
-python -m pip install -r requirements/interpretability.txt
+uv sync --extra interpretability
 ```
 
 ## Example

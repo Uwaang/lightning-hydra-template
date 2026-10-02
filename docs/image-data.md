@@ -7,7 +7,7 @@ dataloaders without changing the minimal MNIST dependency set.
 ## Install
 
 ```bash
-python -m pip install -r requirements/vision.txt
+uv sync --extra vision
 ```
 
 ## Manifest format
@@ -35,7 +35,7 @@ The list form can carry extra metadata for project-specific dataset subclasses.
 ## Train from image files
 
 ```bash
-python src/train.py data=image_classification
+uv run train-command data=image_classification
 ```
 
 The default config expects `train.json`, `val.json`, and `test.json` under
@@ -53,7 +53,7 @@ python scripts/create_image_hdf5.py data/train.json data/train.h5 \
 Then override the dataset storage path:
 
 ```bash
-python src/train.py data=image_classification \
+uv run train-command data=image_classification \
   data.datasets.train.hdf5_path=data/train.h5
 ```
 
