@@ -13,7 +13,10 @@ For classification models whose `predict_step` returns `logits`, `preds`, and
 - one row per test sample with target, prediction, confidence, correctness, and top-k
   probabilities;
 - a bounded MLflow error-analysis table: misclassified samples first, then the
-  lowest-confidence remaining samples.
+  lowest-confidence remaining samples;
+- bounded qualitative image artifacts when image logging is enabled: one transformed
+  train mini-batch, the same fixed validation samples at the first/final checkpoints,
+  and a highest-confidence test-error gallery.
 
 The same MLflow run also receives the best Lightning checkpoint, best/current plain
 PyTorch state dicts, Hydra configuration, train log, package/runtime/Git/GPU metadata,
@@ -42,6 +45,13 @@ reporting:
   log_system_metrics: true
   log_dataset_provenance: true
   log_existing_exports: true
+  image_logging:
+    enabled: true
+    train_preview_images: 16
+    fixed_val_images: 16
+    confident_error_images: 32
+    mean: null
+    std: null
 ```
 
 Disable expensive or large artifacts explicitly for large experiments. The full

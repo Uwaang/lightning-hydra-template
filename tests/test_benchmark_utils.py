@@ -6,7 +6,9 @@ import torch
 from torch import nn
 
 from src.utils.benchmark_utils import (
+    available_onnxruntime_providers,
     benchmark_callable,
+    benchmark_onnx,
     benchmark_runtime_stack,
     save_benchmark_report,
 )
@@ -120,5 +122,51 @@ def test_runtime_stack_rejects_cuda_inputs_when_available(tmp_path: Path) -> Non
     model = TinyBenchmarkModel().cuda()
     inputs = (torch.randn(2, 4, device="cuda"),)
 
-    with pytest.raises(ValueError, match="CPU-only"):
+    with pytest.raises(ValueError, match="CPU host tensors"):
         benchmark_runtime_stack(model, inputs, pt2_path=tmp_path / "unused.pt2")
+
+
+def test_available_onnxruntime_providers_reports_cpu() -> None:
+    pytest.importorskip("onnxruntime")
+    assert "CPUExecutionProvider" in available_onnxruntime_providers()
+
+
+def test_onnx_provider_fails_when_primary_is_unavailable(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    ort = pytest.importorskip("onnxruntime")
+    monkeypatch.setattr(ort, "get_available_providers", lambda: ["CPUExecutionProvider"])
+
+    with pytest.raises(RuntimeError, match="XnnpackExecutionProvider is not available"):
+        benchmark_onnx(
+            "unused.onnx",
+            (torch.randn(1, 4),),
+            provider="xnnpack",
+        )
+
+
+def test_onnx_provider_rejects_runtime_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    ort = pytest.importorskip("onnxruntime")
+    monkeypatch.setattr(
+        ort,
+        "get_available_providers",
+        lambda: ["CUDAExecutionProvider", "CPUExecutionProvider"],
+    )
+
+    class CpuFallbackSession:
+        def __init__(self, *args, **kwargs) -> None:
+            pass
+
+        def get_providers(self) -> list[str]:
+            return ["CPUExecutionProvider"]
+
+    monkeypatch.setattr(ort, "InferenceSession", CpuFallbackSession)
+
+    with pytest.raises(RuntimeError, match="requested but is not active"):
+        benchmark_onnx(
+            "unused.onnx",
+            (torch.randn(1, 4),),
+            provider="cuda",
+        )

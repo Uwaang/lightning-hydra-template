@@ -1,6 +1,7 @@
 from src.utils.benchmark_utils import (
     BenchmarkReport,
     BenchmarkStats,
+    available_onnxruntime_providers,
     benchmark_callable,
     benchmark_eager,
     benchmark_onnx,
@@ -26,6 +27,12 @@ from src.utils.mlflow_utils import (
 from src.utils.monitoring_utils import ResearchMonitorCallback, collect_system_metrics
 from src.utils.provenance_utils import build_dataset_provenance, save_dataset_provenance
 from src.utils.pylogger import RankedLogger
+from src.utils.quantization_utils import (
+    QuantizationReport,
+    StaticCalibrationDataReader,
+    quantize_onnx_static,
+    save_quantization_report,
+)
 from src.utils.reporting_utils import ClassificationReport, save_classification_report
 from src.utils.rich_utils import enforce_tags, print_config_tree
 from src.utils.saving_utils import (

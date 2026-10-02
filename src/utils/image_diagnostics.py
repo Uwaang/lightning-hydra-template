@@ -59,6 +59,9 @@ def save_classification_image_grid(
 ) -> Path | None:
     """Save a compact classification image grid for qualitative inspection."""
     try:
+        import matplotlib
+
+        matplotlib.use("Agg", force=True)
         import matplotlib.pyplot as plt
     except ImportError:
         return None
