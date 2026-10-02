@@ -2529,6 +2529,7 @@ all = [
     { name = "optuna" },
     { name = "segmentation-models-pytorch" },
     { name = "timm" },
+    { name = "torchao" },
 ]
 interpretability = [
     { name = "grad-cam" },
@@ -2542,6 +2543,9 @@ onnx = [
     { name = "onnxruntime", version = "1.23.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "onnxruntime", version = "1.30.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "onnxscript" },
+]
+qat = [
+    { name = "torchao" },
 ]
 sweeps = [
     { name = "hydra-optuna-sweeper" },
@@ -2597,10 +2601,12 @@ requires-dist = [
     { name = "timm", marker = "extra == 'all'", specifier = ">=1.0.30,<2" },
     { name = "timm", marker = "extra == 'model-zoo'", specifier = ">=1.0.30,<2" },
     { name = "torch", specifier = ">=2.14,<2.15", index = "https://download.pytorch.org/whl/cpu" },
+    { name = "torchao", marker = "extra == 'all'", specifier = "==0.18.0" },
+    { name = "torchao", marker = "extra == 'qat'", specifier = "==0.18.0" },
     { name = "torchmetrics", specifier = ">=1.9,<2.0" },
     { name = "torchvision", specifier = ">=0.29,<0.30", index = "https://download.pytorch.org/whl/cpu" },
 ]
-provides-extras = ["vision", "model-zoo", "interpretability", "sweeps", "tracking", "onnx", "all"]
+provides-extras = ["vision", "model-zoo", "interpretability", "sweeps", "tracking", "onnx", "qat", "all"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -5804,6 +5810,15 @@ wheels = [
     { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.1%2Bcpu-cp315-cp315t-manylinux_2_28_aarch64.whl", hash = "sha256:930d724490955b822c0b005499128279e54876a318b51fdb9b9da35e0230cc0f", upload-time = "2026-09-30T19:49:57Z" },
     { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.1%2Bcpu-cp315-cp315t-manylinux_2_28_x86_64.whl", hash = "sha256:2948f065d848178a0402791baf87493b7ebf067dae48a8e04c498d6668e94895", upload-time = "2026-09-30T19:50:06Z" },
     { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.14.1%2Bcpu-cp315-cp315t-win_amd64.whl", hash = "sha256:192745b92c9ac392298e73de950cd02d8a7886117923073d890625622d343ede", upload-time = "2026-09-30T19:50:14Z" },
+]
+
+[[package]]
+name = "torchao"
+version = "0.18.0"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/19/55/ed9ad98f0f09d5a1124d09830043d13a39e63539f9590d2bdb6d71cbc4a4/torchao-0.18.0-cp310-abi3-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:6540b148e40ba81cbd4de86392225a076a1591146e9cebb099b3b234ba9feebe", size = 3372585, upload-time = "2026-08-03T19:43:10.993Z" },
+    { url = "https://files.pythonhosted.org/packages/c4/4d/485477bb8f05bd501016059c6d8abd742f830cb1b24ab7704e086c7cc35a/torchao-0.18.0-py3-none-any.whl", hash = "sha256:5c2b4485341bf28b7fed2c4fc95b9f298e209f41685350f067de85527a05585e", size = 1369798, upload-time = "2026-08-03T19:43:12.649Z" },
 ]
 
 [[package]]
