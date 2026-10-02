@@ -12,7 +12,7 @@ from torch.utils.data import Dataset
 def _extract_images_targets(batch: Any) -> tuple[torch.Tensor, torch.Tensor]:
     if isinstance(batch, Mapping):
         images = batch["image"]
-        targets = batch["label"]
+        targets = batch.get("hard_label", batch["label"])
     else:
         images, targets = batch[:2]
     if not isinstance(images, torch.Tensor):

@@ -106,7 +106,7 @@ with `torch.compile` rather than compiling the whole Lightning module.
 The integrated optional CV stack includes:
 
 - manifest-driven labeled and unlabeled image datasets;
-- Pillow/OpenCV decoding and Albumentations transforms;
+- Pillow/OpenCV decoding, torchvision transforms v2, and optional MixUp/CutMix batch augmentation;
 - process-aware HDF5 image storage;
 - torchvision and timm classifier/backbone adapters;
 - segmentation-models-pytorch integration;

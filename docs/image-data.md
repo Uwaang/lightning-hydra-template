@@ -1,7 +1,7 @@
 # Image data pipeline
 
 The optional vision data pipeline adds manifest-driven image datasets,
-Albumentations transforms, HDF5-backed image reads, and multiple prediction
+torchvision transforms v2, HDF5-backed image reads, and multiple prediction
 dataloaders without changing the minimal MNIST dependency set.
 
 ## Install
@@ -66,3 +66,32 @@ not inherit a live `h5py.File` handle from the parent process.
 receive one prediction dataloader per entry. Multi-dataset training is
 intentionally not handled here; that requires an explicit Lightning 2.x
 `CombinedLoader` policy and is implemented separately.
+
+## Batch augmentation
+
+Classification configs expose torchvision v2 MixUp/CutMix at the DataLoader collate boundary.
+The default is disabled:
+
+```bash
+uv run train-command experiment=image_classification data.batch_augmentation.mode=none
+```
+
+Enable one policy with:
+
+```bash
+uv run train-command experiment=image_classification data.batch_augmentation.mode=mixup
+uv run train-command experiment=image_classification data.batch_augmentation.mode=cutmix
+uv run train-command experiment=image_classification data.batch_augmentation.mode=mixup_cutmix
+```
+
+`mixup_cutmix` randomly chooses `torchvision.transforms.v2.MixUp` or `CutMix` for each
+training batch. Validation, test, and prediction data are never mixed. The mixed soft
+labels are passed to cross-entropy loss while the original hard labels are preserved for
+training accuracy and qualitative image diagnostics. With mixing enabled, that train accuracy
+is a source-label diagnostic rather than a clean-sample accuracy metric; validation/test
+accuracy remains the model-selection metric.
+
+Sample-level augmentation is also torchvision v2. The shipped configs use basic resize/
+crop/flip/color transforms, and additional v2 policies such as `RandAugment`,
+`TrivialAugmentWide`, or `AugMix` can be added as Hydra-instantiated operations when a
+specific experiment needs them.

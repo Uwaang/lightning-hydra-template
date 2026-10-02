@@ -20,7 +20,7 @@ PyTorch Lightning 1.8 runtime forward.
 1. ✅ Modernize dependencies and CI while preserving the upstream MNIST path.
 2. ✅ Port reproducibility utilities, prediction export, and state-dict export.
 3. ✅ Add a modern CUDA Docker workflow.
-4. ✅ Port generic image datasets, Albumentations transforms, and HDF5 support.
+4. ✅ Port generic image datasets, torchvision v2 transforms, and HDF5 support.
 5. ✅ Introduce provider-specific adapters for torchvision, timm, and segmentation-models-pytorch.
 6. ✅ Port reusable losses and use TorchMetrics for maintained standard metrics.
 7. ✅ Add generic single-task image classification.
@@ -31,7 +31,7 @@ PyTorch Lightning 1.8 runtime forward.
 ## Integration hardening completed
 
 - Optional vision/model/interpretability/sweep dependencies are separated from core.
-- Albumentations and h5py are lazy imports rather than core import-time requirements.
+- HDF5/OpenCV remain optional vision dependencies; torchvision v2 is provided by the core torchvision stack.
 - Optuna sweeping uses the tested `hydra-optuna-sweeper==1.2.0` +
   `optuna==2.10.1` pair with the stable Hydra 1.3.7 baseline.
 - VICReg supports unlabeled manifests and monitors `val/loss`.

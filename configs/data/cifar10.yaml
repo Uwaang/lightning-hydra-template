@@ -6,3 +6,10 @@ batch_size: 128
 num_workers: 0
 pin_memory: True
 split_seed: 42
+
+batch_augmentation:
+  _target_: src.data.components.transforms.ClassificationBatchCollate
+  num_classes: ${model.num_classes}
+  mode: none
+  mixup_alpha: 0.2
+  cutmix_alpha: 1.0

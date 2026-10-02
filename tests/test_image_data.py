@@ -6,7 +6,6 @@ import torch
 from omegaconf import OmegaConf
 from PIL import Image
 
-pytest.importorskip("albumentations")
 pytest.importorskip("h5py")
 
 from src.data.components.hdf5 import write_hdf5_images
