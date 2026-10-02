@@ -26,8 +26,13 @@ class ClassificationLitModule(LightningModule):
         if num_classes < 2:
             raise ValueError("ClassificationLitModule requires num_classes >= 2.")
 
-        self.save_hyperparameters(logger=False, ignore=["net", "loss"])
+        self.save_hyperparameters(
+            logger=False,
+            ignore=["net", "optimizer", "scheduler", "loss"],
+        )
         self.net = net
+        self.optimizer_factory = optimizer
+        self.scheduler_factory = scheduler
         self.criterion = loss
 
         self.train_loss = MeanMetric()
@@ -121,11 +126,11 @@ class ClassificationLitModule(LightningModule):
             self.net = torch.compile(self.net)
 
     def configure_optimizers(self) -> dict[str, Any]:
-        optimizer = self.hparams.optimizer(params=self.parameters())
-        if self.hparams.scheduler is None:
+        optimizer = self.optimizer_factory(params=self.parameters())
+        if self.scheduler_factory is None:
             return {"optimizer": optimizer}
 
-        scheduler = self.hparams.scheduler(optimizer=optimizer)
+        scheduler = self.scheduler_factory(optimizer=optimizer)
         return {
             "optimizer": optimizer,
             "lr_scheduler": {

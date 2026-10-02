@@ -65,3 +65,13 @@ def test_configure_optimizer_without_scheduler() -> None:
     configured = module.configure_optimizers()
 
     assert isinstance(configured["optimizer"], torch.optim.Adam)
+
+
+def test_checkpoint_hyperparameters_are_weights_only_safe(tmp_path) -> None:
+    module = _module()
+    checkpoint_path = tmp_path / "classification_hparams.ckpt"
+    torch.save({"hyper_parameters": dict(module.hparams)}, checkpoint_path)
+
+    loaded = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
+
+    assert loaded["hyper_parameters"] == {"num_classes": 3, "compile": False}
