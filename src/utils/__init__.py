@@ -9,6 +9,12 @@ from src.utils.benchmark_utils import (
     save_benchmark_report,
 )
 from src.utils.export_utils import export_onnx, export_pt2
+from src.utils.image_diagnostics import (
+    ClassificationImageDiagnosticsCallback,
+    save_classification_image_grid,
+    save_confident_error_gallery,
+    select_confident_errors,
+)
 from src.utils.instantiators import instantiate_callbacks, instantiate_loggers
 from src.utils.logging_utils import log_hyperparameters
 from src.utils.metadata_utils import log_run_metadata

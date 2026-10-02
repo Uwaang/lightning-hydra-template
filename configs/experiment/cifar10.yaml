@@ -1,0 +1,36 @@
+# @package _global_
+
+defaults:
+  - override /data: cifar10
+  - override /model: cifar10
+  - override /trainer: gpu
+  - override /logger: mlflow
+
+task_name: "cifar10"
+tags: ["cifar10", "rgb", "image-diagnostics"]
+seed: 123
+
+trainer:
+  max_epochs: 10
+  deterministic: true
+
+extras:
+  reporting:
+    class_names:
+      - airplane
+      - automobile
+      - bird
+      - cat
+      - deer
+      - dog
+      - frog
+      - horse
+      - ship
+      - truck
+    image_logging:
+      enabled: true
+      train_preview_images: 16
+      fixed_val_images: 16
+      confident_error_images: 32
+      mean: [0.4914, 0.4822, 0.4465]
+      std: [0.2470, 0.2435, 0.2616]

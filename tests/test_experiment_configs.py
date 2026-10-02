@@ -6,6 +6,7 @@ from hydra import compose, initialize
     ("experiment", "monitor"),
     [
         ("example", "val/acc"),
+        ("cifar10", "val/acc"),
         ("image_classification", "val/acc"),
         ("image_multitask", "val/acc"),
         ("image_reid", "val/acc"),
