@@ -1,8 +1,7 @@
-import pickle
-
 import numpy as np
 import pytest
 import torch
+from torch.utils.data import DataLoader, TensorDataset
 from torchvision.transforms import v2
 
 from src.data.components.transforms import (
@@ -61,12 +60,24 @@ def test_classification_batch_collate_repr_is_stable() -> None:
     )
 
 
-def test_classification_batch_collate_is_picklable_for_worker_processes() -> None:
-    collate = ClassificationBatchCollate(num_classes=3, mode="mixup_cutmix")
+def test_classification_batch_collate_works_with_spawn_worker() -> None:
+    dataset = TensorDataset(
+        torch.rand(4, 3, 8, 8),
+        torch.tensor([0, 1, 2, 0]),
+    )
+    loader = DataLoader(
+        dataset,
+        batch_size=4,
+        num_workers=1,
+        collate_fn=ClassificationBatchCollate(num_classes=3, mode="mixup_cutmix"),
+        multiprocessing_context="spawn",
+    )
 
-    restored = pickle.loads(pickle.dumps(collate))
+    batch = next(iter(loader))
 
-    assert restored.mode == "mixup_cutmix"
+    assert batch["image"].shape == (4, 3, 8, 8)
+    assert batch["label"].shape == (4, 3)
+    assert torch.equal(batch["hard_label"], torch.tensor([0, 1, 2, 0]))
 
 
 def test_classification_batch_collate_none_keeps_default_batch() -> None:
