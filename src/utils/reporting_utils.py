@@ -67,6 +67,9 @@ def _save_confusion_matrix_figure(
     normalized: bool = False,
 ) -> Path | None:
     try:
+        import matplotlib
+
+        matplotlib.use("Agg", force=True)
         import matplotlib.pyplot as plt
     except ImportError:
         return None

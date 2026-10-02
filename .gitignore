@@ -103,6 +103,7 @@ celerybeat.pid
 
 # Environments
 .venv
+.venv-*/
 env/
 venv/
 ENV/
@@ -140,6 +141,7 @@ dmypy.json
 .idea/
 
 # Data & Models
+/artifacts/
 *.h5
 *.tar
 *.tar.gz

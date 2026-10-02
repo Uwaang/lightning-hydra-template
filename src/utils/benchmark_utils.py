@@ -77,7 +77,7 @@ def benchmark_callable(
     repeats: int = 20,
     num_threads: int = 1,
 ) -> BenchmarkStats:
-    """Measure repeated CPU inference latency without setup or export time."""
+    """Measure repeated synchronous inference latency without setup or export time."""
     if warmup_iterations < 0:
         raise ValueError("warmup_iterations must be zero or greater.")
 
@@ -128,12 +128,12 @@ def benchmark_callable(
 
 
 def _require_cpu_tensors(args: tuple[Any, ...]) -> None:
-    """Reject accelerator inputs until all compared backends share one device path."""
+    """Require host tensors so provider benchmarks include host/device transfer consistently."""
     for value in args:
         if isinstance(value, torch.Tensor) and value.device.type != "cpu":
             raise ValueError(
-                "Runtime stack benchmarks are CPU-only for now. "
-                "GPU timing will be added with an ONNX Runtime GPU provider path."
+                "Runtime stack benchmarks currently require CPU host tensors. "
+                "Accelerator providers include host/device transfer in measured latency."
             )
 
 
@@ -189,17 +189,49 @@ def benchmark_pt2(
     )
 
 
+ORT_PROVIDER_STACKS: dict[str, tuple[str, ...]] = {
+    "cpu": ("CPUExecutionProvider",),
+    "xnnpack": ("XnnpackExecutionProvider", "CPUExecutionProvider"),
+    "cuda": ("CUDAExecutionProvider", "CPUExecutionProvider"),
+    "tensorrt": (
+        "TensorrtExecutionProvider",
+        "CUDAExecutionProvider",
+        "CPUExecutionProvider",
+    ),
+}
+
+ORT_PROVIDER_BACKENDS = {
+    "cpu": "onnxruntime_cpu",
+    "xnnpack": "onnxruntime_xnnpack",
+    "cuda": "onnxruntime_cuda",
+    "tensorrt": "onnxruntime_tensorrt",
+}
+
+
+def available_onnxruntime_providers() -> list[str]:
+    """Return execution providers compiled into the installed ONNX Runtime package."""
+    try:
+        import onnxruntime as ort
+    except ImportError as exc:
+        raise ImportError(
+            "ONNX Runtime benchmarking requires the optional ONNX stack. "
+            "Install it with `uv sync --extra onnx`."
+        ) from exc
+    return list(ort.get_available_providers())
+
+
 def benchmark_onnx(
     artifact_path: str | Path,
     example_args: tuple[Any, ...],
     *,
+    provider: str = "cpu",
     batch_size: int = 1,
     warmup_iterations: int = 10,
     iterations_per_repeat: int = 50,
     repeats: int = 20,
     num_threads: int = 1,
 ) -> BenchmarkStats:
-    """Benchmark an ONNX artifact with ONNX Runtime's CPU execution provider."""
+    """Benchmark an ONNX artifact with one explicit ONNX Runtime provider stack."""
     _require_cpu_tensors(example_args)
 
     try:
@@ -210,13 +242,38 @@ def benchmark_onnx(
             "Install it with `uv sync --extra onnx`."
         ) from exc
 
+    if provider not in ORT_PROVIDER_STACKS:
+        supported = ", ".join(sorted(ORT_PROVIDER_STACKS))
+        raise ValueError(
+            f"Unknown ONNX Runtime provider {provider!r}; expected one of: {supported}."
+        )
+
+    provider_stack = ORT_PROVIDER_STACKS[provider]
+    available = set(ort.get_available_providers())
+    primary_provider = provider_stack[0]
+    if primary_provider not in available:
+        available_text = ", ".join(sorted(available)) or "none"
+        raise RuntimeError(
+            f"{primary_provider} is not available in this ONNX Runtime build. "
+            f"Available providers: {available_text}."
+        )
+
+    enabled_stack = [item for item in provider_stack if item in available]
     session_options = ort.SessionOptions()
     session_options.intra_op_num_threads = num_threads
     session = ort.InferenceSession(
         str(artifact_path),
         sess_options=session_options,
-        providers=["CPUExecutionProvider"],
+        providers=enabled_stack,
     )
+    active_providers = session.get_providers()
+    if primary_provider not in active_providers:
+        active_text = ", ".join(active_providers) or "none"
+        raise RuntimeError(
+            f"{primary_provider} was requested but is not active in the created session. "
+            f"Active providers: {active_text}. Check provider runtime dependencies."
+        )
+
     inputs = session.get_inputs()
     if len(inputs) != len(example_args):
         raise ValueError(
@@ -232,7 +289,7 @@ def benchmark_onnx(
 
     return benchmark_callable(
         lambda: session.run(None, feed),
-        backend="onnxruntime_cpu",
+        backend=ORT_PROVIDER_BACKENDS[provider],
         batch_size=batch_size,
         warmup_iterations=warmup_iterations,
         iterations_per_repeat=iterations_per_repeat,
@@ -252,15 +309,16 @@ def benchmark_runtime_stack(
     model: nn.Module,
     example_args: tuple[Any, ...],
     *,
-    pt2_path: str | Path,
+    pt2_path: str | Path | None = None,
     onnx_path: str | Path | None = None,
+    onnx_providers: Sequence[str] = ("cpu",),
     batch_size: int = 1,
     warmup_iterations: int = 10,
     iterations_per_repeat: int = 50,
     repeats: int = 20,
     num_threads: int = 1,
 ) -> BenchmarkReport:
-    """Benchmark eager, PT2 graph, and optional ONNX Runtime inference paths."""
+    """Benchmark eager plus optional PT2 and ONNX Runtime execution-provider paths."""
     _require_cpu_tensors(example_args)
 
     common = {
@@ -270,18 +328,28 @@ def benchmark_runtime_stack(
         "repeats": repeats,
         "num_threads": num_threads,
     }
-    results = [
-        benchmark_eager(model, example_args, **common),
-        benchmark_pt2(pt2_path, example_args, **common),
-    ]
+    results = [benchmark_eager(model, example_args, **common)]
+    if pt2_path is not None:
+        results.append(benchmark_pt2(pt2_path, example_args, **common))
     if onnx_path is not None:
-        results.append(benchmark_onnx(onnx_path, example_args, **common))
+        for provider in onnx_providers:
+            results.append(
+                benchmark_onnx(
+                    onnx_path,
+                    example_args,
+                    provider=provider,
+                    **common,
+                )
+            )
 
     input_shapes = [list(value.shape) for value in example_args if isinstance(value, torch.Tensor)]
+    uses_accelerator = onnx_path is not None and any(
+        provider in {"cuda", "tensorrt"} for provider in onnx_providers
+    )
     return BenchmarkReport(
         schema_version=1,
         created_at_utc=datetime.now(timezone.utc).isoformat(),
-        device="cpu",
+        device="mixed" if uses_accelerator else "cpu",
         model_class=f"{model.__class__.__module__}.{model.__class__.__qualname__}",
         input_shapes=input_shapes,
         environment={
