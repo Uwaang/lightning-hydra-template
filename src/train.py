@@ -34,6 +34,7 @@ register_configs()
 # ------------------------------------------------------------------------------------ #
 
 from src.utils import (
+    ClassificationImageDiagnosticsCallback,
     RankedLogger,
     ResearchMonitorCallback,
     extras,
@@ -46,6 +47,7 @@ from src.utils import (
     log_run_metadata,
     publish_mlflow_artifacts,
     save_classification_report,
+    save_confident_error_gallery,
     save_dataset_provenance,
     save_state_dicts,
     task_wrapper,
@@ -84,6 +86,30 @@ def train(cfg: DictConfig) -> tuple[dict[str, Any], dict[str, Any]]:
 
     reporting_cfg = cfg.extras.get("reporting", {}) if cfg.get("extras") else {}
     reporting_requested = bool(logger and reporting_cfg.get("enabled", False))
+
+    visualization_metadata: dict[str, Any] = {}
+    visualization_metadata_fn = getattr(datamodule, "visualization_metadata", None)
+    if callable(visualization_metadata_fn):
+        visualization_metadata = dict(visualization_metadata_fn())
+
+    reporting_class_names: list[str] | None
+    class_names_cfg = reporting_cfg.get("class_names")
+    if class_names_cfg is not None:
+        reporting_class_names = list(class_names_cfg)
+    else:
+        metadata_class_names = visualization_metadata.get("class_names")
+        reporting_class_names = list(metadata_class_names) if metadata_class_names else None
+
+    image_logging_cfg = reporting_cfg.get("image_logging", {})
+    image_logging_requested = bool(reporting_requested and image_logging_cfg.get("enabled", False))
+    image_mean_cfg = image_logging_cfg.get("mean")
+    image_std_cfg = image_logging_cfg.get("std")
+    image_mean = (
+        list(image_mean_cfg) if image_mean_cfg is not None else visualization_metadata.get("mean")
+    )
+    image_std = (
+        list(image_std_cfg) if image_std_cfg is not None else visualization_metadata.get("std")
+    )
     if reporting_requested:
         if reporting_cfg.get("log_learning_rate", True) and not any(
             isinstance(callback, LearningRateMonitor) for callback in callbacks
@@ -96,6 +122,17 @@ def train(cfg: DictConfig) -> tuple[dict[str, Any], dict[str, Any]]:
                 ResearchMonitorCallback(
                     log_epoch_time=bool(reporting_cfg.get("log_epoch_time", True)),
                     log_system_metrics=bool(reporting_cfg.get("log_system_metrics", True)),
+                )
+            )
+        if image_logging_requested:
+            callbacks.append(
+                ClassificationImageDiagnosticsCallback(
+                    output_dir=cfg.paths.output_dir,
+                    class_names=reporting_class_names,
+                    mean=image_mean,
+                    std=image_std,
+                    train_preview_images=int(image_logging_cfg.get("train_preview_images", 16)),
+                    fixed_val_images=int(image_logging_cfg.get("fixed_val_images", 16)),
                 )
             )
 
@@ -184,8 +221,7 @@ def train(cfg: DictConfig) -> tuple[dict[str, Any], dict[str, Any]]:
             ckpt_path=ckpt_path,
         )
         try:
-            class_names_cfg = reporting_cfg.get("class_names")
-            class_names = list(class_names_cfg) if class_names_cfg is not None else None
+            class_names = reporting_class_names
             report = save_classification_report(
                 predictions=predictions,
                 dirname=cfg.paths.output_dir,
@@ -203,6 +239,28 @@ def train(cfg: DictConfig) -> tuple[dict[str, Any], dict[str, Any]]:
                 step=trainer.global_step,
             )
             artifact_groups.setdefault("reports/test", []).extend(report.artifacts.values())
+            if image_logging_requested:
+                test_loader = datamodule.test_dataloader()
+                test_dataset = getattr(test_loader, "dataset", None)
+                if test_dataset is not None:
+                    try:
+                        error_gallery = save_confident_error_gallery(
+                            report.rows,
+                            test_dataset,
+                            Path(cfg.paths.output_dir)
+                            / "reports"
+                            / "test"
+                            / "confident_errors.png",
+                            class_names=reporting_class_names,
+                            mean=image_mean,
+                            std=image_std,
+                            max_images=int(image_logging_cfg.get("confident_error_images", 32)),
+                        )
+                    except (KeyError, TypeError, ValueError) as exc:
+                        log.warning(f"Test error gallery skipped: {exc}")
+                    else:
+                        if error_gallery is not None:
+                            artifact_groups.setdefault("reports/test", []).append(error_gallery)
             if reporting_cfg.get("log_prediction_table", True):
                 log_prediction_table_to_mlflow(
                     trainer.loggers,
@@ -216,6 +274,10 @@ def train(cfg: DictConfig) -> tuple[dict[str, Any], dict[str, Any]]:
             artifact_groups.setdefault("checkpoints", []).append(Path(ckpt_path))
 
         output_dir = Path(cfg.paths.output_dir)
+        image_reports_dir = output_dir / "reports" / "images"
+        if image_reports_dir.is_dir():
+            artifact_groups.setdefault("reports/images", []).append(image_reports_dir)
+
         hydra_dir = output_dir / ".hydra"
         if hydra_dir.is_dir():
             artifact_groups.setdefault("config", []).append(hydra_dir)

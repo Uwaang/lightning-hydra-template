@@ -90,6 +90,17 @@ class MNISTDataModule(LightningDataModule):
 
         self.batch_size_per_device = batch_size
 
+    class_names = [str(index) for index in range(10)]
+    visualization_mean = (0.1307,)
+    visualization_std = (0.3081,)
+
+    def visualization_metadata(self) -> dict[str, Any]:
+        return {
+            "class_names": list(self.class_names),
+            "mean": list(self.visualization_mean),
+            "std": list(self.visualization_std),
+        }
+
     @property
     def num_classes(self) -> int:
         """Get the number of classes.

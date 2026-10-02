@@ -1,0 +1,26 @@
+_target_: src.models.classification_module.ClassificationLitModule
+
+num_classes: 10
+
+optimizer:
+  _target_: torch.optim.SGD
+  _partial_: true
+  lr: 0.1
+  momentum: 0.9
+  weight_decay: 0.0005
+
+scheduler:
+  _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+  _partial_: true
+  T_max: 10
+
+loss:
+  _target_: torch.nn.CrossEntropyLoss
+
+net:
+  _target_: src.models.components.adapters.TorchvisionClassifier
+  model_name: resnet18
+  num_classes: ${model.num_classes}
+  weights: null
+
+compile: false

@@ -34,3 +34,10 @@ reporting:
   log_system_metrics: True
   log_dataset_provenance: True
   log_existing_exports: True
+  image_logging:
+    enabled: True
+    train_preview_images: 16
+    fixed_val_images: 16
+    confident_error_images: 32
+    mean: null
+    std: null
