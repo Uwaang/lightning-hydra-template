@@ -53,9 +53,8 @@ def prepare_x86_qat_pt2e(
     """Export a module and insert x86 PT2E fake-quant nodes for QAT.
 
     The source module is captured in training mode so training-sensitive operators such as
-    BatchNorm keep their training semantics. The source module's original mode is restored
-    before returning. The returned GraphModule is ready for normal forward/backward/optimizer
-    steps.
+    BatchNorm keep their training semantics. The source module's original mode is restored before
+    returning. The returned GraphModule is ready for normal forward/backward/optimizer steps.
     """
     prepare_qat_pt2e, _, exported_mode_api, quantizer_api = _require_torchao()
     X86InductorQuantizer, get_default_x86_inductor_quantization_config = quantizer_api
@@ -105,8 +104,8 @@ def export_qat_onnx(
     """Export a converted PT2E-QAT graph without calling the normal Module.eval API.
 
     Exported PT2E GraphModules intentionally do not support the regular eval() path.
-    convert_x86_qat_pt2e already switches exported-model semantics to inference mode,
-    so this helper directly invokes the dynamo ONNX exporter.
+    convert_x86_qat_pt2e already switches exported-model semantics to inference mode, so this
+    helper directly invokes the dynamo ONNX exporter.
     """
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
