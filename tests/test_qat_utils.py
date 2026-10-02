@@ -34,6 +34,8 @@ def test_qat_prepare_step_reload_and_convert() -> None:
     example = torch.randn(4, 3, 16, 16)
     targets = torch.tensor([0, 1, 2, 3])
     qat_model = _prepared_model(example)
+    qat_model.eval()
+    qat_model.train()
     optimizer = torch.optim.SGD(qat_model.parameters(), lr=1e-3)
 
     output = qat_model(example)

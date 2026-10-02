@@ -13,6 +13,7 @@ from src.utils.console_utils import configure_windows_stdio
 def _require_torchao() -> tuple[Any, Any, Any, Any]:
     try:
         from torchao.quantization.pt2e import (
+            allow_exported_model_train_eval,
             move_exported_model_to_eval,
             move_exported_model_to_train,
         )
@@ -32,7 +33,11 @@ def _require_torchao() -> tuple[Any, Any, Any, Any]:
     return (
         prepare_qat_pt2e,
         convert_pt2e,
-        (move_exported_model_to_train, move_exported_model_to_eval),
+        (
+            move_exported_model_to_train,
+            move_exported_model_to_eval,
+            allow_exported_model_train_eval,
+        ),
         (X86InductorQuantizer, get_default_x86_inductor_quantization_config),
     )
 
@@ -73,15 +78,16 @@ def prepare_x86_qat_pt2e(
         get_default_x86_inductor_quantization_config(is_qat=True)
     )
     qat_model = prepare_qat_pt2e(exported, quantizer)
-    move_exported_model_to_train, _ = exported_mode_api
+    move_exported_model_to_train, _, allow_exported_model_train_eval = exported_mode_api
     move_exported_model_to_train(qat_model)
+    allow_exported_model_train_eval(qat_model)
     return qat_model
 
 
 def convert_x86_qat_pt2e(qat_model: nn.Module) -> nn.Module:
     """Convert a prepared QAT graph to quantized-decomposed PT2E inference form."""
     _, convert_pt2e, exported_mode_api, _ = _require_torchao()
-    _, move_exported_model_to_eval = exported_mode_api
+    _, move_exported_model_to_eval, _ = exported_mode_api
     converted = convert_pt2e(qat_model)
     move_exported_model_to_eval(converted)
     return converted

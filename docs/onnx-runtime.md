@@ -117,7 +117,8 @@ PyTorch module
 ```
 
 The current helper is deliberately explicit about scope:
-`prepare_x86_qat_pt2e()` uses torchao's `X86InductorQuantizer`,
+`prepare_x86_qat_pt2e()` uses torchao's `X86InductorQuantizer` and enables the exported-model
+`train()` / `eval()` compatibility shim needed by ordinary trainer mode switches,
 `convert_x86_qat_pt2e()` converts the trained graph, and
 `export_qat_onnx()` serializes the converted graph without calling the unsupported
 regular `Module.eval()` path on an exported GraphModule.
