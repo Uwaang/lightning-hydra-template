@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import pytest
 import torch
 from torch.utils.data import TensorDataset
 
@@ -21,6 +22,7 @@ def test_select_confident_errors_prioritizes_high_confidence() -> None:
 
 
 def test_save_classification_image_grid_rgb(tmp_path: Path) -> None:
+    pytest.importorskip("matplotlib")
     path = save_classification_image_grid(
         torch.rand(4, 3, 8, 8),
         torch.tensor([0, 1, 0, 1]),
@@ -36,6 +38,7 @@ def test_save_classification_image_grid_rgb(tmp_path: Path) -> None:
 
 
 def test_save_confident_error_gallery_reads_only_selected_samples(tmp_path: Path) -> None:
+    pytest.importorskip("matplotlib")
     dataset = TensorDataset(
         torch.rand(4, 3, 8, 8),
         torch.tensor([0, 1, 0, 1]),
