@@ -66,6 +66,7 @@ uv sync --extra interpretability
 uv sync --extra sweeps
 uv sync --extra tracking
 uv sync --extra onnx
+uv sync --extra qat
 ```
 
 ## Training and configuration
@@ -143,7 +144,9 @@ onnx_program = export_onnx(model, (example,), "artifacts/model.onnx", verify=Tru
 ```
 
 The ONNX extra is tested on Python 3.10 and 3.12. Static INT8 post-training quantization
-and provider-aware runtime benchmarking are also part of the optional ONNX stack.
+and provider-aware runtime benchmarking are also part of the optional ONNX stack. Optional
+PT2E QAT uses `torchao==0.18.0` through the separate `qat` extra and can export a converted
+QAT graph as QDQ ONNX for ONNX Runtime.
 
 ## Runtime benchmarking
 
@@ -239,10 +242,11 @@ Near-term work:
 
 1. evaluate static type checking after the typed Hydra boundary settles;
 2. remove duplicate push/PR CI execution where branch protection still gets equivalent coverage;
-3. add optional ExecuTorch and torchao/PT2E recipes only where a validated backend exists.
+3. add optional ExecuTorch recipes only where a validated backend exists.
 
-Later, optional deployment recipes can add ExecuTorch and torchao/PT2E where a
-validated backend exists. Fabric, FSDP2/DTensor, and Distributed Checkpoint are not
+PT2E QAT is now an optional torchao-backed capability rather than part of the core training
+path. ExecuTorch remains a future deployment option only if a validated target needs it.
+Fabric, FSDP2/DTensor, and Distributed Checkpoint are not
 core template features until there is a real multi-GPU use case and corresponding
 runtime validation.
 

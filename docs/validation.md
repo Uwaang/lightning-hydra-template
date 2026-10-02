@@ -37,7 +37,7 @@ The Tests workflow covers:
 - core tests on Windows and macOS with Python 3.12;
 - the optional vision environment;
 - ONNX export/runtime parity and static-quantization coverage on Python 3.10 and 3.12;
-- the full optional-dependency environment;
+- the full optional-dependency environment, including torchao-backed QAT smoke coverage;
 - selected Hydra/Optuna integration smoke tests;
 - coverage collection.
 
@@ -51,7 +51,7 @@ Dependency or Docker changes also run Docker Smoke. That workflow:
 2. verifies that CUDA-compiled PyTorch 2.14 and torchvision 0.29 were preserved;
 3. runs a CPU `fast_dev_run` inside the CUDA image;
 4. builds the default full optional image;
-5. imports the optional vision, model-zoo, interpretability, and sweeps stack.
+5. imports the optional vision, model-zoo, interpretability, sweeps, and torchao QAT stack.
 
 ## 3. CUDA runtime smoke
 
@@ -97,7 +97,7 @@ settings.
 - [ ] locked core and full optional test matrices are green;
 - [ ] Code Quality PR is green;
 - [ ] Docker Smoke is green when packaging or Docker files changed;
-- [ ] PT2/ONNX export, ORT provider, and quantization tests are green when deployment code changed;
+- [ ] PT2/ONNX export, ORT provider, PTQ, and QAT tests are green when deployment code changed;
 - [ ] no unresolved license/provenance concern;
 - [ ] original ashleve MIT notice is preserved;
 - [ ] a real GPU smoke has been run when CUDA behavior materially changed.

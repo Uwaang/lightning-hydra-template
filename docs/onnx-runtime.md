@@ -87,6 +87,58 @@ python scripts/cifar10_ort_spike.py \
 Quantization is an optimization candidate, not an assumed speedup. Always benchmark the
 target CPU and execution provider.
 
+## Quantization-aware training
+
+QAT is optional and isolated from the default training/deployment path. Install the
+PyTorch QAT dependency separately:
+
+```bash
+uv sync --extra qat
+```
+
+ONNX export/runtime validation needs both extras:
+
+```bash
+uv sync --extra qat --extra onnx
+```
+
+The validated path uses `torchao==0.18.0` with the repository's PyTorch 2.14 line:
+
+```text
+PyTorch module
+  -> torch.export training graph
+  -> torchao PT2E prepare_qat_pt2e
+  -> normal forward/backward/optimizer steps with fake quantization
+  -> state_dict save/load
+  -> convert_pt2e
+  -> quantized_decomposed graph
+  -> ONNX QDQ export
+  -> ONNX Runtime
+```
+
+The current helper is deliberately explicit about scope:
+`prepare_x86_qat_pt2e()` uses torchao's `X86InductorQuantizer` and enables the exported-model
+`train()` / `eval()` compatibility shim needed by ordinary trainer mode switches,
+`convert_x86_qat_pt2e()` converts the trained graph, and
+`export_qat_onnx()` serializes the converted graph without calling the unsupported
+regular `Module.eval()` path on an exported GraphModule.
+
+The integration test uses a small Conv/BatchNorm/ReLU/Linear model rather than treating
+one application model such as ResNet-18 as the QAT target. It verifies that a training
+step runs, QAT state can be loaded into an equivalently prepared graph, conversion
+produces quantized-decomposed operators, the exported ONNX model contains
+`QuantizeLinear` / `DequantizeLinear`, and ORT executes the result. Accuracy and
+latency are intentionally not acceptance criteria for this capability smoke.
+
+PTQ and QAT therefore converge on the same deployment boundary:
+
+```text
+PTQ: FP32 ONNX -> ORT static quantization -> QDQ ONNX -> ORT
+QAT: PyTorch -> torchao PT2E QAT -> convert -> QDQ ONNX -> ORT
+```
+
+The normal PTQ/ORT path does not require torchao.
+
 ## Reference validation
 
 A local validation run used the repository's 10-epoch CIFAR-10 ResNet-18 checkpoint.

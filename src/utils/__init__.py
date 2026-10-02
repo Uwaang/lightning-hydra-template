@@ -27,6 +27,11 @@ from src.utils.mlflow_utils import (
 from src.utils.monitoring_utils import ResearchMonitorCallback, collect_system_metrics
 from src.utils.provenance_utils import build_dataset_provenance, save_dataset_provenance
 from src.utils.pylogger import RankedLogger
+from src.utils.qat_utils import (
+    convert_x86_qat_pt2e,
+    export_qat_onnx,
+    prepare_x86_qat_pt2e,
+)
 from src.utils.quantization_utils import (
     QuantizationReport,
     StaticCalibrationDataReader,
