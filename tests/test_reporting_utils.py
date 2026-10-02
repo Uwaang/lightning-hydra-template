@@ -108,7 +108,12 @@ def test_mlflow_artifact_and_prediction_table_publish(tmp_path: Path) -> None:
     assert client.artifacts == [("run-123", str(artifact), "reports/test")]
     assert client.tables[0][0] == "run-123"
     assert client.tables[0][2] == "reports/test/predictions_table.json"
-    assert client.tables[0][1]["columns"] == ["sample_index", "target", "pred", "correct"]
+    assert client.tables[0][1] == {
+        "sample_index": [0],
+        "target": [1],
+        "pred": [1],
+        "correct": [True],
+    }
 
 
 def test_select_prediction_table_rows_prioritizes_errors_then_uncertain() -> None:
