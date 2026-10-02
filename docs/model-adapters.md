@@ -8,7 +8,7 @@ construction and classifier APIs.
 ## Optional dependencies
 
 ```bash
-python -m pip install -r requirements/model-zoo.txt
+uv sync --extra model-zoo
 ```
 
 Torchvision remains part of the core dependency set. timm and
