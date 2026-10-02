@@ -111,7 +111,7 @@ def log_prediction_table_to_mlflow(
     columns = [
         column for column in preferred_columns if any(column in row for row in selected_rows)
     ]
-    data = [[row.get(column) for column in columns] for row in selected_rows]
+    data = {column: [row.get(column) for row in selected_rows] for column in columns}
 
     for logger in loggers:
         handles = _mlflow_handles(logger)
@@ -120,6 +120,6 @@ def log_prediction_table_to_mlflow(
         client, run_id = handles
         client.log_table(
             run_id,
-            data={"columns": columns, "data": data},
+            data=data,
             artifact_file=artifact_file,
         )
