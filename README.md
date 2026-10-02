@@ -64,6 +64,8 @@ uv sync --extra vision
 uv sync --extra model-zoo
 uv sync --extra interpretability
 uv sync --extra sweeps
+uv sync --extra tracking
+uv sync --extra onnx
 ```
 
 ## Training and configuration
@@ -91,6 +93,7 @@ remain flexible `_target_`-driven configs.
 Current experiment examples include:
 
 - generic image classification;
+- CIFAR-10 ResNet-18 validation with bounded qualitative image diagnostics;
 - shared-backbone multi-task classification with `CombinedLoader`;
 - ReID embeddings with GeM and angular-margin objectives;
 - VICReg self-supervised pretraining.
@@ -109,6 +112,7 @@ The integrated optional CV stack includes:
 - segmentation-models-pytorch integration;
 - Focal Loss, ArcFace, SphereFace, CosFace, and VICReg;
 - Grad-CAM tooling;
+- bounded train/validation/error-gallery image diagnostics;
 - JSON/CSV prediction export;
 - plain state-dict export and run metadata snapshots.
 
@@ -116,12 +120,12 @@ See the focused documentation under `docs/` for component details.
 
 ## PyTorch and ONNX export
 
-`src.utils.export_pt2` exports a plain inference `nn.Module` with
-`torch.export`, saves a `.pt2` artifact, reloads it, and checks eager/runtime
-numerical parity.
+`src.utils.export_onnx` is the primary portable deployment path. It uses the modern
+`torch.export`-based ONNX exporter, serializes the returned `ONNXProgram`, and can
+verify numerical parity with ONNX Runtime.
 
-`src.utils.export_onnx` uses the modern `torch.export`-based ONNX exporter,
-serializes the returned `ONNXProgram`, and can verify the model with ONNX Runtime.
+`src.utils.export_pt2` remains available when a PyTorch-native exported graph is useful,
+but a `.pt2` artifact is not required for ONNX Runtime deployment.
 
 ```bash
 uv sync --extra onnx
@@ -130,54 +134,45 @@ uv sync --extra onnx
 ```python
 import torch
 
-from src.utils import export_onnx, export_pt2
+from src.utils import export_onnx
 
 model = ...  # plain torch.nn.Module
 example = torch.randn(1, 3, 224, 224)
 
-pt2_program = export_pt2(model, (example,), "artifacts/model.pt2")
 onnx_program = export_onnx(model, (example,), "artifacts/model.onnx", verify=True)
 ```
 
-The ONNX extra is tested on Python 3.10 and 3.12. Python 3.10 uses the last compatible
-ONNX Runtime line, while newer Python versions use the current runtime line. ExecuTorch
-and quantization backends remain optional follow-up deployment layers rather than
-dependencies of the training core.
+The ONNX extra is tested on Python 3.10 and 3.12. Static INT8 post-training quantization
+and provider-aware runtime benchmarking are also part of the optional ONNX stack.
 
 ## Runtime benchmarking
 
-Runtime benchmarks are deliberately independent from W&B, MLflow, or another tracking
-backend. The first benchmark layer compares equivalent CPU inference paths:
+Runtime benchmarks are independent from the experiment logger and can compare PyTorch
+eager/PT2 paths with ONNX Runtime execution providers. The ORT provider names supported
+by the benchmark layer are:
 
-- plain PyTorch eager execution;
-- the graph returned by a loaded PT2 `ExportedProgram`;
-- ONNX Runtime with `CPUExecutionProvider`.
+- `cpu` -> `CPUExecutionProvider`;
+- `xnnpack` -> `XnnpackExecutionProvider` with CPU fallback;
+- `cuda` -> `CUDAExecutionProvider` with CPU fallback;
+- `tensorrt` -> `TensorrtExecutionProvider` with CUDA/CPU fallback.
 
-Export/setup time is excluded. Measurements use explicit warmup iterations, repeated
-samples, one configurable CPU thread count, and report mean/median/p90/p95 latency plus
-median-based throughput. The raw per-repeat samples are kept in the JSON artifact.
+The requested primary provider must remain active after session creation; if ORT drops
+that provider during session setup, the benchmark fails instead of being mislabeled.
+Normal per-node fallback inside an active provider stack can still occur.
 
-```python
-from src.utils import benchmark_runtime_stack, save_benchmark_report
-
-report = benchmark_runtime_stack(
-    model,
-    (example,),
-    pt2_path="artifacts/model.pt2",
-    onnx_path="artifacts/model.onnx",
-    batch_size=1,
-    warmup_iterations=10,
-    iterations_per_repeat=50,
-    repeats=20,
-    num_threads=1,
-)
-save_benchmark_report(report, "artifacts/benchmark.json")
+```bash
+python scripts/ort_provider_matrix.py artifacts/model.onnx \
+  --input-shape 1,3,224,224 \
+  --providers cpu xnnpack cuda tensorrt \
+  --output artifacts/provider-matrix.json
 ```
 
-The PT2 result is named `pytorch_pt2_graph` intentionally: loading an
-`ExportedProgram` does not by itself imply a separate optimized runtime. GPU benchmarking
-is deferred until the PyTorch and ONNX Runtime paths can use comparable GPU execution
-providers and correct asynchronous timing.
+Static INT8 PTQ is available through `src.utils.quantize_onnx_static`; the
+`scripts/cifar10_ort_spike.py` helper demonstrates FP32-vs-INT8 accuracy, size, and
+CPU-latency comparison.
+
+See [docs/onnx-runtime.md](docs/onnx-runtime.md) for benchmark semantics, environment
+requirements, validated examples, and x86/Arm64 deployment recipes.
 
 ## Experiment reporting
 

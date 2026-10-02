@@ -36,7 +36,7 @@ The Tests workflow covers:
 - core tests on Linux Python 3.10, 3.11, and 3.12;
 - core tests on Windows and macOS with Python 3.12;
 - the optional vision environment;
-- ONNX export/runtime parity on Python 3.10 and 3.12;
+- ONNX export/runtime parity and static-quantization coverage on Python 3.10 and 3.12;
 - the full optional-dependency environment;
 - selected Hydra/Optuna integration smoke tests;
 - coverage collection.
@@ -72,12 +72,17 @@ docker run --rm --gpus all --ipc=host \
 The integrated PyTorch 2.14 stack was previously validated on a GeForce GTX 1660
 with PyTorch 2.14.0+cu130, torchvision 0.29.0+cu130, and CUDA runtime 13.0.
 
+When ONNX Runtime GPU-provider behavior changes, also run the provider matrix on a
+physical NVIDIA GPU. Verify that CUDA/TensorRT remain active in the created session;
+the benchmark utility rejects silent fallback to a lower-priority provider.
+
 ## 4. Feature experiments
 
 The shipped image experiments compose in CI without requiring user data.
 End-to-end runs require manifests under the configured `data/` paths:
 
 ```bash
+uv run train-command experiment=cifar10
 uv run train-command experiment=image_classification
 uv run train-command experiment=image_multitask
 uv run train-command experiment=image_reid
@@ -92,7 +97,7 @@ settings.
 - [ ] locked core and full optional test matrices are green;
 - [ ] Code Quality PR is green;
 - [ ] Docker Smoke is green when packaging or Docker files changed;
-- [ ] PT2 and ONNX exported-artifact tests are green when deployment code changed;
+- [ ] PT2/ONNX export, ORT provider, and quantization tests are green when deployment code changed;
 - [ ] no unresolved license/provenance concern;
 - [ ] original ashleve MIT notice is preserved;
 - [ ] a real GPU smoke has been run when CUDA behavior materially changed.
