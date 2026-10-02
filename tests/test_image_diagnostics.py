@@ -5,10 +5,23 @@ import torch
 from torch.utils.data import TensorDataset
 
 from src.utils.image_diagnostics import (
+    _extract_images_targets,
     save_classification_image_grid,
     save_confident_error_gallery,
     select_confident_errors,
 )
+
+
+def test_extract_images_targets_prefers_hard_label() -> None:
+    batch = {
+        "image": torch.rand(4, 3, 8, 8),
+        "label": torch.full((4, 3), 1 / 3),
+        "hard_label": torch.tensor([0, 1, 2, 1]),
+    }
+
+    _, targets = _extract_images_targets(batch)
+
+    assert torch.equal(targets, batch["hard_label"])
 
 
 def test_select_confident_errors_prioritizes_high_confidence() -> None:

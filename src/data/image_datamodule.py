@@ -16,11 +16,13 @@ class ImageDataModule(LightningDataModule):
         datasets: DictConfig,
         loaders: DictConfig,
         transforms: DictConfig | None = None,
+        batch_augmentation: DictConfig | None = None,
     ) -> None:
         super().__init__()
         self.datasets_cfg = datasets
         self.loaders_cfg = loaders
         self.transforms_cfg = transforms
+        self.batch_augmentation_cfg = batch_augmentation
 
         self.data_train: Dataset[Any] | None = None
         self.data_val: Dataset[Any] | None = None
@@ -81,6 +83,11 @@ class ImageDataModule(LightningDataModule):
 
         if int(loader_cfg.get("num_workers", 0)) == 0:
             loader_cfg.pop("persistent_workers", None)
+
+        if stage == "train" and self.batch_augmentation_cfg is not None:
+            if "collate_fn" in loader_cfg:
+                raise ValueError("Configure either loaders.train.collate_fn or batch_augmentation.")
+            loader_cfg["collate_fn"] = hydra.utils.instantiate(self.batch_augmentation_cfg)
 
         return DataLoader(dataset=dataset, **loader_cfg)
 

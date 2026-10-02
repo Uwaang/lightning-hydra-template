@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any, cast
 
 import torch
 from lightning import LightningDataModule
 from torch.utils.data import DataLoader, Dataset, Subset
 from torchvision.datasets import CIFAR10
-from torchvision.transforms import transforms
+from torchvision.transforms import v2
 
 
 class CIFAR10DataModule(LightningDataModule):
@@ -35,25 +36,29 @@ class CIFAR10DataModule(LightningDataModule):
         num_workers: int = 0,
         pin_memory: bool = True,
         split_seed: int = 42,
+        batch_augmentation: Callable[[list[Any]], Any] | None = None,
     ) -> None:
         super().__init__()
         train_val_split = cast(tuple[int, int], tuple(train_val_split))
         if sum(train_val_split) != 50_000:
             raise ValueError("CIFAR-10 train_val_split must sum to 50,000.")
-        self.save_hyperparameters(logger=False)
+        self.save_hyperparameters(logger=False, ignore=["batch_augmentation"])
+        self.batch_augmentation = batch_augmentation
 
-        self.train_transforms = transforms.Compose(
+        self.train_transforms = v2.Compose(
             [
-                transforms.RandomCrop(32, padding=4),
-                transforms.RandomHorizontalFlip(),
-                transforms.ToTensor(),
-                transforms.Normalize(self.visualization_mean, self.visualization_std),
+                v2.ToImage(),
+                v2.RandomCrop(32, padding=4),
+                v2.RandomHorizontalFlip(),
+                v2.ToDtype(torch.float32, scale=True),
+                v2.Normalize(self.visualization_mean, self.visualization_std),
             ]
         )
-        self.eval_transforms = transforms.Compose(
+        self.eval_transforms = v2.Compose(
             [
-                transforms.ToTensor(),
-                transforms.Normalize(self.visualization_mean, self.visualization_std),
+                v2.ToImage(),
+                v2.ToDtype(torch.float32, scale=True),
+                v2.Normalize(self.visualization_mean, self.visualization_std),
             ]
         )
 
@@ -80,6 +85,7 @@ class CIFAR10DataModule(LightningDataModule):
             "split_lengths": list(self.hparams.train_val_split) + [10_000],
             "train_transform": repr(self.train_transforms),
             "eval_transform": repr(self.eval_transforms),
+            "batch_augmentation": repr(self.batch_augmentation),
             "class_names": list(self.class_names),
         }
 
@@ -128,6 +134,7 @@ class CIFAR10DataModule(LightningDataModule):
             num_workers=int(self.hparams.num_workers),
             pin_memory=bool(self.hparams.pin_memory),
             persistent_workers=bool(self.hparams.num_workers),
+            collate_fn=self.batch_augmentation if shuffle else None,
         )
 
     def train_dataloader(self) -> DataLoader[Any]:

@@ -8,7 +8,7 @@ ports the useful behavior of
 
 - modern Lightning/Hydra project skeleton
 - image manifests and unlabeled prediction datasets
-- Albumentations transforms
+- torchvision transforms v2 pipelines
 - HDF5-backed image storage
 - multiple prediction dataloaders
 - explicit multi-task training with CombinedLoader

@@ -48,21 +48,25 @@ class ClassificationLitModule(LightningModule):
         return self.net(x)
 
     @staticmethod
-    def _unpack_batch(batch: Any) -> tuple[torch.Tensor, torch.Tensor]:
+    def _unpack_batch(
+        batch: Any,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         if isinstance(batch, Mapping):
-            return batch["image"], batch["label"]
+            targets = batch["label"]
+            metric_targets = batch.get("hard_label", targets)
+            return batch["image"], targets, metric_targets
         x, y = batch
-        return x, y
+        return x, y, y
 
     def model_step(
         self,
         batch: Any,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
-        x, targets = self._unpack_batch(batch)
+        x, targets, metric_targets = self._unpack_batch(batch)
         logits = self.forward(x)
         loss = self.criterion(logits, targets)
         preds = torch.argmax(logits, dim=1)
-        return loss, logits, preds, targets
+        return loss, logits, preds, metric_targets
 
     def on_train_start(self) -> None:
         self.val_loss.reset()
