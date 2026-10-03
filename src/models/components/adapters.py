@@ -47,9 +47,7 @@ def _torchvision_classifier_head(model: nn.Module) -> nn.Module:
 def _backbone_parameters(model: nn.Module, head: nn.Module) -> Iterator[nn.Parameter]:
     head_parameter_ids = {id(parameter) for parameter in head.parameters()}
     return (
-        parameter
-        for parameter in model.parameters()
-        if id(parameter) not in head_parameter_ids
+        parameter for parameter in model.parameters() if id(parameter) not in head_parameter_ids
     )
 
 
