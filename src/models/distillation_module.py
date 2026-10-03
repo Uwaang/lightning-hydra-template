@@ -85,7 +85,17 @@ class DistillationClassificationLitModule(ClassificationLitModule):
             * temperature**2
         )
 
-    def training_step(self, batch: Any, batch_idx: int) -> torch.Tensor:
+    def distillation_model_step(
+        self,
+        batch: Any,
+    ) -> tuple[
+        torch.Tensor,
+        torch.Tensor,
+        torch.Tensor,
+        torch.Tensor,
+        torch.Tensor,
+        torch.Tensor,
+    ]:
         inputs, loss_targets, metric_targets = self._unpack_batch(batch)
         student_logits = self.forward(inputs)
         supervised_loss = self.criterion(student_logits, loss_targets)
@@ -94,8 +104,20 @@ class DistillationClassificationLitModule(ClassificationLitModule):
             teacher_logits = self.teacher(inputs)
         distillation_loss = self._distillation_loss(student_logits, teacher_logits)
         loss = (1.0 - self.alpha) * supervised_loss + self.alpha * distillation_loss
-
         predictions = torch.argmax(student_logits, dim=1)
+        return (
+            loss,
+            supervised_loss,
+            distillation_loss,
+            student_logits,
+            predictions,
+            metric_targets,
+        )
+
+    def training_step(self, batch: Any, batch_idx: int) -> torch.Tensor:
+        loss, supervised_loss, distillation_loss, _, predictions, metric_targets = (
+            self.distillation_model_step(batch)
+        )
         self.train_loss(loss)
         self.train_supervised_loss(supervised_loss)
         self.train_distillation_loss(distillation_loss)
