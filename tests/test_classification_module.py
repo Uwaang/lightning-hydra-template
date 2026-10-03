@@ -93,9 +93,7 @@ def test_configure_optimizer_uses_only_trainable_parameters() -> None:
 
     optimizer = module.configure_optimizers()["optimizer"]
     optimized_ids = {
-        id(parameter)
-        for group in optimizer.param_groups
-        for parameter in group["params"]
+        id(parameter) for group in optimizer.param_groups for parameter in group["params"]
     }
 
     assert id(first_parameter) not in optimized_ids
