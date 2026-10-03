@@ -95,6 +95,7 @@ Current experiment examples include:
 
 - generic image classification;
 - pretrained image-classification fine-tuning with staged backbone unfreezing and optional EMA;
+- optional logits-only knowledge distillation with a frozen teacher;
 - CIFAR-10 ResNet-18 validation with bounded qualitative image diagnostics;
 - shared-backbone multi-task classification with `CombinedLoader`;
 - ReID embeddings with GeM and angular-margin objectives;
@@ -118,12 +119,16 @@ The integrated optional CV stack includes:
 - bounded train/validation/error-gallery image diagnostics;
 - JSON/CSV prediction export;
 - plain state-dict export and run metadata snapshots;
-- dependency-free model complexity reports and Pareto-front analysis.
+- dependency-free model complexity reports and Pareto-front analysis;
+- single- and multi-objective Hydra/Optuna HPO presets.
 
 See the focused documentation under `docs/` for component details, including
 [`docs/model-profiling.md`](docs/model-profiling.md) for Params/MAC/FLOP/size profiling and
-Pareto analysis, and [`docs/training-recipes.md`](docs/training-recipes.md) for label smoothing,
-EMA, pretrained initialization, and staged fine-tuning.
+Pareto analysis, [`docs/training-recipes.md`](docs/training-recipes.md) for label smoothing,
+EMA, pretrained initialization, and staged fine-tuning,
+[`docs/knowledge-distillation.md`](docs/knowledge-distillation.md) for logit KD, and
+[`docs/hyperparameter-optimization.md`](docs/hyperparameter-optimization.md) for HPO/Pareto
+search.
 
 ## PyTorch and ONNX export
 
