@@ -1,0 +1,10 @@
+defaults:
+  - default
+  - _self_
+
+ema:
+  _target_: lightning.pytorch.callbacks.WeightAveraging
+  use_buffers: True
+  multi_avg_fn:
+    _target_: torch.optim.swa_utils.get_ema_multi_avg_fn
+    decay: 0.999
