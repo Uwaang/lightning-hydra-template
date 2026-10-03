@@ -81,7 +81,6 @@ def test_optuna_multiobjective_sweep(tmp_path: Path) -> None:
         "experiment=example",
         "hydra.sweep.dir=" + str(tmp_path),
         "hydra.sweeper.n_trials=2",
-        "hydra.sweeper.sampler.population_size=2",
         "++trainer.fast_dev_run=true",
     ] + overrides
     run_sh_command(command)
