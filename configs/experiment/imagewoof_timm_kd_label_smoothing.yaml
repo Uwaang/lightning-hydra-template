@@ -1,0 +1,23 @@
+# @package _global_
+
+defaults:
+  - override /data: imagewoof160
+  - override /model: imagewoof_timm_kd
+  - override /callbacks: default
+  - override /trainer: gpu
+
+tags: ["imagewoof160", "timm", "kd", "label-smoothing"]
+seed: 12345
+save_state_dict: true
+
+model:
+  loss:
+    label_smoothing: 0.1
+
+trainer:
+  max_epochs: 12
+  precision: 16-mixed
+
+hydra:
+  run:
+    dir: ${oc.env:PROJECT_ROOT}/logs/benchmarks/imagewoof/kd-label-smoothing

@@ -1,0 +1,31 @@
+_target_: src.models.classification_module.ClassificationLitModule
+
+num_classes: 10
+teacher: null
+teacher_state_dict_path: null
+distillation_alpha: 0.0
+distillation_temperature: 4.0
+
+optimizer:
+  _target_: torch.optim.AdamW
+  _partial_: true
+  lr: 0.0003
+  weight_decay: 0.01
+
+scheduler:
+  _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+  _partial_: true
+  T_max: 12
+  eta_min: 0.000001
+
+loss:
+  _target_: torch.nn.CrossEntropyLoss
+  label_smoothing: 0.0
+
+net:
+  _target_: src.models.components.adapters.TimmClassifier
+  model_name: mobilenetv3_small_100.lamb_in1k
+  num_classes: ${model.num_classes}
+  pretrained: false
+
+compile: false
