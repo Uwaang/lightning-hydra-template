@@ -68,18 +68,16 @@ def profile_model_complexity(
 ) -> ModelComplexityReport:
     """Profile parameters, size, standard-layer MACs/FLOPs and CUDA peak memory.
 
-    MAC counting covers Conv1d/2d/3d and Linear modules. FLOPs use the explicit convention
-    2 * MACs. Functional/custom operators are intentionally not guessed, so models that rely
-    heavily on them should treat the MAC/FLOP fields as partial coverage.
+    MAC counting covers Conv1d/2d/3d and Linear modules. FLOPs use the explicit convention 2 *
+    MACs. Functional/custom operators are intentionally not guessed, so models that rely heavily on
+    them should treat the MAC/FLOP fields as partial coverage.
     """
     total_params = sum(parameter.numel() for parameter in model.parameters())
     trainable_params = sum(
         parameter.numel() for parameter in model.parameters() if parameter.requires_grad
     )
     state_dict_bytes = _state_dict_serialized_bytes(model)
-    input_shapes = [
-        list(value.shape) for value in example_args if isinstance(value, torch.Tensor)
-    ]
+    input_shapes = [list(value.shape) for value in example_args if isinstance(value, torch.Tensor)]
 
     macs = 0
     handles: list[Any] = []
