@@ -41,7 +41,8 @@ def test_train_fast_dev_run(cfg_train: DictConfig) -> None:
     with open_dict(cfg_train):
         cfg_train.trainer.fast_dev_run = True
         cfg_train.trainer.accelerator = "cpu"
-    train(cfg_train)
+    metric_dict, _ = train(cfg_train)
+    assert float(metric_dict["model/params"]) > 0
 
 
 @RunIf(min_gpus=1)
