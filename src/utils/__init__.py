@@ -53,4 +53,4 @@ from src.utils.saving_utils import (
     save_predictions,
     save_state_dicts,
 )
-from src.utils.utils import extras, get_metric_value, task_wrapper
+from src.utils.utils import extras, get_metric_value, get_metric_values, task_wrapper
