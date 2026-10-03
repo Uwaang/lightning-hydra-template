@@ -32,14 +32,19 @@ def log_hyperparameters(object_dict: dict[str, Any]) -> None:
 
     hparams["model"] = cfg["model"]
 
-    # save number of model parameters
-    hparams["model/params/total"] = sum(p.numel() for p in model.parameters())
+    # Save task-network parameters separately from optional training-only helpers such as a teacher.
+    parameter_model = getattr(model, "net", model)
+    hparams["model/params/total"] = sum(p.numel() for p in parameter_model.parameters())
     hparams["model/params/trainable"] = sum(
-        p.numel() for p in model.parameters() if p.requires_grad
+        p.numel() for p in parameter_model.parameters() if p.requires_grad
     )
     hparams["model/params/non_trainable"] = sum(
-        p.numel() for p in model.parameters() if not p.requires_grad
+        p.numel() for p in parameter_model.parameters() if not p.requires_grad
     )
+
+    teacher = getattr(model, "teacher", None)
+    if teacher is not None:
+        hparams["teacher/params/total"] = sum(p.numel() for p in teacher.parameters())
 
     hparams["data"] = cfg["data"]
     hparams["trainer"] = cfg["trainer"]

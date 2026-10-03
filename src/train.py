@@ -39,6 +39,7 @@ from src.utils import (
     ResearchMonitorCallback,
     extras,
     get_metric_value,
+    get_metric_values,
     instantiate_callbacks,
     instantiate_loggers,
     log_hyperparameters,
@@ -77,6 +78,12 @@ def train(cfg: DictConfig) -> tuple[dict[str, Any], dict[str, Any]]:
 
     log.info(f"Instantiating model <{cfg.model._target_}>")
     model: LightningModule = hydra.utils.instantiate(cfg.model)
+    optimization_target = getattr(model, "net", model)
+    optimization_metrics = {
+        "model/params": float(
+            sum(parameter.numel() for parameter in optimization_target.parameters())
+        )
+    }
 
     log.info("Instantiating callbacks...")
     callbacks: list[Callback] = instantiate_callbacks(cfg.get("callbacks"))
@@ -175,12 +182,15 @@ def train(cfg: DictConfig) -> tuple[dict[str, Any], dict[str, Any]]:
     )
     if should_save_state_dicts and cfg.get("train"):
         state_dict_cfg = cfg.extras.get("state_dict", {})
+        exclude_prefixes = list(state_dict_cfg.get("exclude_prefixes", []))
+        if getattr(model, "teacher", None) is not None and "teacher." not in exclude_prefixes:
+            exclude_prefixes.append("teacher.")
         state_dict_paths = save_state_dicts(
             trainer=trainer,
             model=model,
             dirname=cfg.paths.output_dir,
             strip_prefix=state_dict_cfg.get("strip_prefix", ""),
-            exclude_prefixes=state_dict_cfg.get("exclude_prefixes", []),
+            exclude_prefixes=exclude_prefixes,
         )
         if reporting_enabled:
             artifact_groups.setdefault("weights", []).extend(state_dict_paths.values())
@@ -294,17 +304,17 @@ def train(cfg: DictConfig) -> tuple[dict[str, Any], dict[str, Any]]:
         publish_mlflow_artifacts(trainer.loggers, artifact_groups)
 
     # merge train, test, and report metrics
-    metric_dict = {**train_metrics, **test_metrics, **report_metrics}
+    metric_dict = {**train_metrics, **test_metrics, **report_metrics, **optimization_metrics}
 
     return metric_dict, object_dict
 
 
 @hydra.main(version_base="1.3", config_path="../configs", config_name="train.yaml")
-def main(cfg: DictConfig) -> float | None:
+def main(cfg: DictConfig) -> float | tuple[float, ...] | None:
     """Main entry point for training.
 
     :param cfg: DictConfig configuration composed by Hydra.
-    :return: Optional[float] with optimized metric value.
+    :return: One optimized metric, an ordered tuple of objectives, or None.
     """
     # apply extra utilities
     # (e.g. ask for tags if none are provided in cfg, print cfg tree, etc.)
@@ -313,13 +323,15 @@ def main(cfg: DictConfig) -> float | None:
     # train the model
     metric_dict, _ = train(cfg)
 
-    # safely retrieve metric value for hydra-based hyperparameter optimization
-    metric_value = get_metric_value(
-        metric_dict=metric_dict, metric_name=cfg.get("optimized_metric")
-    )
+    # safely retrieve objective value(s) for hydra-based hyperparameter optimization
+    optimized_metrics = list(cfg.get("optimized_metrics") or [])
+    optimized_metric = cfg.get("optimized_metric")
+    if optimized_metrics:
+        if optimized_metric:
+            raise ValueError("Set either optimized_metric or optimized_metrics, not both.")
+        return get_metric_values(metric_dict=metric_dict, metric_names=optimized_metrics)
 
-    # return optimized metric
-    return metric_value
+    return get_metric_value(metric_dict=metric_dict, metric_name=optimized_metric)
 
 
 if __name__ == "__main__":

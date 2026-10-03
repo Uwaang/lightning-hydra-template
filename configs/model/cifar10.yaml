@@ -2,6 +2,11 @@ _target_: src.models.classification_module.ClassificationLitModule
 
 num_classes: 10
 
+teacher: null
+teacher_state_dict_path: null
+distillation_alpha: 0.0
+distillation_temperature: 4.0
+
 optimizer:
   _target_: torch.optim.SGD
   _partial_: true

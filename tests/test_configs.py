@@ -76,3 +76,44 @@ def test_training_recipe_callback_configs(callbacks_name: str) -> None:
 def test_classification_label_smoothing_defaults_off() -> None:
     cfg = OmegaConf.load("configs/model/image_classification.yaml")
     assert cfg.loss.label_smoothing == 0.0
+
+
+def test_multi_objective_optuna_config_composes() -> None:
+    pytest.importorskip("hydra_plugins.hydra_optuna_sweeper")
+    with initialize(version_base="1.3", config_path="../configs"):
+        cfg = compose(
+            config_name="train.yaml",
+            overrides=["experiment=example", "hparams_search=mnist_optuna_pareto"],
+            return_hydra_config=True,
+        )
+
+    assert list(cfg.optimized_metrics) == ["val/acc_best", "model/params"]
+    assert list(cfg.hydra.sweeper.direction) == ["maximize", "minimize"]
+
+
+def test_image_classification_optuna_config_composes() -> None:
+    pytest.importorskip("hydra_plugins.hydra_optuna_sweeper")
+    with initialize(version_base="1.3", config_path="../configs"):
+        cfg = compose(
+            config_name="train.yaml",
+            overrides=[
+                "experiment=image_classification",
+                "hparams_search=image_classification_optuna",
+            ],
+            return_hydra_config=True,
+        )
+
+    assert cfg.optimized_metric == "val/acc_best"
+    assert cfg.hydra.sweeper.params["model.loss.label_smoothing"] == "interval(0.0, 0.2)"
+
+
+def test_kd_model_recipe_requires_teacher_state_dict() -> None:
+    with initialize(version_base="1.3", config_path="../configs"):
+        cfg = compose(
+            config_name="train.yaml",
+            overrides=["experiment=image_classification", "model=image_classification_kd"],
+        )
+
+    assert OmegaConf.is_missing(cfg.model, "teacher_state_dict_path")
+    assert cfg.model.distillation_alpha == 0.5
+    assert cfg.model.teacher.model_name == "resnet50"

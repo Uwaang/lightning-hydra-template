@@ -26,6 +26,7 @@ uv run python -m pytest \
   tests/test_sweeps.py::test_example_experiment \
   tests/test_sweeps.py::test_hydra_sweep \
   tests/test_sweeps.py::test_optuna_sweep \
+  tests/test_sweeps.py::test_optuna_multiobjective_sweep \
   -v
 ```
 

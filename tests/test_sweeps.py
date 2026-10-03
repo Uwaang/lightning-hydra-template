@@ -68,3 +68,19 @@ def test_optuna_sweep(tmp_path: Path) -> None:
         "++trainer.fast_dev_run=true",
     ] + overrides
     run_sh_command(command)
+
+
+@RunIf(sh=True, optuna_sweeper=True)
+@pytest.mark.slow
+def test_optuna_multiobjective_sweep(tmp_path: Path) -> None:
+    """Test that Hydra Optuna receives and completes a two-objective study."""
+    command = [
+        startfile,
+        "-m",
+        "hparams_search=mnist_optuna_pareto",
+        "experiment=example",
+        "hydra.sweep.dir=" + str(tmp_path),
+        "hydra.sweeper.n_trials=2",
+        "++trainer.fast_dev_run=true",
+    ] + overrides
+    run_sh_command(command)
