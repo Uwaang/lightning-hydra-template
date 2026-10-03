@@ -3,7 +3,10 @@ import pytest
 from hydra import compose, initialize
 from hydra.core.hydra_config import HydraConfig
 from hydra.errors import ConfigCompositionException
+from lightning.pytorch.callbacks import WeightAveraging
 from omegaconf import DictConfig, OmegaConf
+
+from src.callbacks import BackboneUnfreezingCallback
 
 
 def test_train_config(cfg_train: DictConfig) -> None:
@@ -54,3 +57,22 @@ def test_train_schema_rejects_invalid_seed_type() -> None:
     with initialize(version_base="1.3", config_path="../configs"):
         with pytest.raises(ConfigCompositionException):
             compose(config_name="train.yaml", overrides=["seed=not-an-int"])
+
+
+@pytest.mark.parametrize("callbacks_name", ["ema", "finetune", "finetune_ema"])
+def test_training_recipe_callback_configs(callbacks_name: str) -> None:
+    with initialize(version_base="1.3", config_path="../configs"):
+        cfg = compose(config_name="train.yaml", overrides=[f"callbacks={callbacks_name}"])
+
+    if "ema" in cfg.callbacks:
+        ema = hydra.utils.instantiate(cfg.callbacks.ema)
+        assert isinstance(ema, WeightAveraging)
+
+    if "backbone_unfreezing" in cfg.callbacks:
+        finetuning = hydra.utils.instantiate(cfg.callbacks.backbone_unfreezing)
+        assert isinstance(finetuning, BackboneUnfreezingCallback)
+
+
+def test_classification_label_smoothing_defaults_off() -> None:
+    cfg = OmegaConf.load("configs/model/image_classification.yaml")
+    assert cfg.loss.label_smoothing == 0.0
