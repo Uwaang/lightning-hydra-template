@@ -86,6 +86,24 @@ def test_configure_optimizer_without_scheduler() -> None:
     assert isinstance(configured["optimizer"], torch.optim.Adam)
 
 
+def test_configure_optimizer_uses_only_trainable_parameters() -> None:
+    module = _module()
+    first_parameter = next(module.parameters())
+    first_parameter.requires_grad = False
+
+    optimizer = module.configure_optimizers()["optimizer"]
+    optimized_ids = {
+        id(parameter)
+        for group in optimizer.param_groups
+        for parameter in group["params"]
+    }
+
+    assert id(first_parameter) not in optimized_ids
+    assert optimized_ids == {
+        id(parameter) for parameter in module.parameters() if parameter.requires_grad
+    }
+
+
 def test_checkpoint_hyperparameters_are_weights_only_safe(tmp_path) -> None:
     module = _module()
     checkpoint_path = tmp_path / "classification_hparams.ckpt"
@@ -93,4 +111,10 @@ def test_checkpoint_hyperparameters_are_weights_only_safe(tmp_path) -> None:
 
     loaded = torch.load(checkpoint_path, map_location="cpu", weights_only=True)
 
-    assert loaded["hyper_parameters"] == {"num_classes": 3, "compile": False}
+    assert loaded["hyper_parameters"] == {
+        "num_classes": 3,
+        "compile": False,
+        "pretrained_checkpoint": None,
+        "pretrained_strip_prefix": "",
+        "pretrained_ignore_shape_mismatch": False,
+    }
