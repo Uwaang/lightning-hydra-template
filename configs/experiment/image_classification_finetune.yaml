@@ -1,0 +1,23 @@
+# @package _global_
+
+defaults:
+  - override /data: image_classification
+  - override /model: image_classification
+  - override /callbacks: finetune_ema
+  - override /trainer: default
+
+tags: ["image-classification", "finetune"]
+seed: 42
+
+model:
+  net:
+    weights: DEFAULT
+  loss:
+    label_smoothing: 0.1
+
+callbacks:
+  backbone_unfreezing:
+    unfreeze_at_epoch: 1
+
+trainer:
+  max_epochs: 10
