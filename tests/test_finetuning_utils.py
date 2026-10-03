@@ -59,9 +59,7 @@ def test_pattern_finetuning_freezes_then_unfreezes() -> None:
     assert all(parameter.requires_grad for parameter in module.parameters())
     assert len(optimizer.param_groups) == 2
     optimized_ids = {
-        id(parameter)
-        for group in optimizer.param_groups
-        for parameter in group["params"]
+        id(parameter) for group in optimizer.param_groups for parameter in group["params"]
     }
     assert optimized_ids == {id(parameter) for parameter in module.parameters()}
     assert optimizer.param_groups[1]["lr"] == pytest.approx(0.01)
