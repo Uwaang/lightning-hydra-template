@@ -1,0 +1,7 @@
+defaults:
+  - default
+  - _self_
+
+backbone_unfreezing:
+  _target_: src.callbacks.BackboneUnfreezingCallback
+  unfreeze_at_epoch: 1
