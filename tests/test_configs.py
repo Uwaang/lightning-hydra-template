@@ -97,7 +97,9 @@ def test_image_augmentation_policy_presets_compose(
 
 def test_pretrained_classification_preset_composes() -> None:
     with initialize(version_base="1.3", config_path="../configs"):
-        cfg = compose(config_name="train.yaml", overrides=["model=image_classification_pretrained"])
+        cfg = compose(
+            config_name="train.yaml", overrides=["model=image_classification_pretrained"]
+        )
 
     assert cfg.model.net.weights == "DEFAULT"
     assert cfg.model.loss.label_smoothing == 0.0
