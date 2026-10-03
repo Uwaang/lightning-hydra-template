@@ -34,6 +34,10 @@ class ParetoObjective:
     key: str
     direction: Literal["min", "max"]
 
+    def __post_init__(self) -> None:
+        if self.direction not in {"min", "max"}:
+            raise ValueError("Pareto objective direction must be 'min' or 'max'.")
+
 
 def _state_dict_serialized_bytes(model: nn.Module) -> int:
     buffer = io.BytesIO()
