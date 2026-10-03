@@ -25,6 +25,19 @@ def test_torchvision_v2_transform_returns_normalized_tensor() -> None:
     assert torch.allclose(output, torch.ones_like(output))
 
 
+def test_torchvision_v2_transform_applies_policy_before_float_conversion() -> None:
+    transform = TorchvisionV2Transform(
+        operations=[],
+        policy=v2.RandomInvert(p=1.0),
+    )
+    image = np.zeros((4, 6, 3), dtype=np.uint8)
+
+    output = transform(image=image)["image"]
+
+    assert output.dtype == torch.float32
+    assert torch.allclose(output, torch.ones_like(output))
+
+
 @pytest.mark.parametrize("mode", ["mixup", "cutmix", "mixup_cutmix"])
 def test_classification_batch_collate_preserves_hard_labels(mode: str) -> None:
     collate = ClassificationBatchCollate(
