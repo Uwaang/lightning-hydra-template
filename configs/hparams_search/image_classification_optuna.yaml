@@ -1,0 +1,35 @@
+# @package _global_
+
+# Generic CV recipe search:
+# uv run train-command -m experiment=image_classification hparams_search=image_classification_optuna
+
+defaults:
+  - override /hydra/sweeper: optuna
+
+optimized_metric: "val/acc_best"
+
+hydra:
+  mode: "MULTIRUN"
+
+  sweeper:
+    _target_: hydra_plugins.hydra_optuna_sweeper.optuna_sweeper.OptunaSweeper
+
+    storage: null
+    study_name: null
+    n_jobs: 1
+    direction: maximize
+    n_trials: 30
+
+    sampler:
+      _target_: optuna.samplers.TPESampler
+      seed: 1234
+      n_startup_trials: 10
+
+    params:
+      model.optimizer.lr: tag(log, interval(0.00001, 0.01))
+      model.optimizer.weight_decay: tag(log, interval(0.000001, 0.1))
+      model.loss.label_smoothing: interval(0.0, 0.2)
+      data.batch_size: choice(32, 64, 128)
+      data.batch_augmentation.mode: choice(none, mixup, cutmix, mixup_cutmix)
+      data.batch_augmentation.mixup_alpha: interval(0.1, 0.8)
+      data.batch_augmentation.cutmix_alpha: interval(0.5, 2.0)
