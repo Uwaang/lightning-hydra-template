@@ -1,0 +1,23 @@
+# @package _global_
+
+defaults:
+  - override /data: imagewoof160
+  - override /model: imagewoof_timm
+  - override /callbacks: ema
+  - override /trainer: gpu
+
+tags: ["imagewoof160", "timm", "ema"]
+seed: 12345
+save_state_dict: true
+
+model:
+  net:
+    pretrained: true
+
+trainer:
+  max_epochs: 12
+  precision: 16-mixed
+
+hydra:
+  run:
+    dir: ${oc.env:PROJECT_ROOT}/logs/benchmarks/imagewoof/ema

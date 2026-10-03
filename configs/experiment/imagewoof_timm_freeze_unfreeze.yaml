@@ -1,0 +1,27 @@
+# @package _global_
+
+defaults:
+  - override /data: imagewoof160
+  - override /model: imagewoof_timm
+  - override /callbacks: finetune
+  - override /trainer: gpu
+
+tags: ["imagewoof160", "timm", "freeze-unfreeze"]
+seed: 12345
+save_state_dict: true
+
+model:
+  net:
+    pretrained: true
+
+callbacks:
+  backbone_unfreezing:
+    unfreeze_at_epoch: 2
+
+trainer:
+  max_epochs: 12
+  precision: 16-mixed
+
+hydra:
+  run:
+    dir: ${oc.env:PROJECT_ROOT}/logs/benchmarks/imagewoof/freeze-unfreeze
