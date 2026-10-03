@@ -180,12 +180,15 @@ def train(cfg: DictConfig) -> tuple[dict[str, Any], dict[str, Any]]:
     )
     if should_save_state_dicts and cfg.get("train"):
         state_dict_cfg = cfg.extras.get("state_dict", {})
+        exclude_prefixes = list(state_dict_cfg.get("exclude_prefixes", []))
+        if getattr(model, "teacher", None) is not None and "teacher." not in exclude_prefixes:
+            exclude_prefixes.append("teacher.")
         state_dict_paths = save_state_dicts(
             trainer=trainer,
             model=model,
             dirname=cfg.paths.output_dir,
             strip_prefix=state_dict_cfg.get("strip_prefix", ""),
-            exclude_prefixes=state_dict_cfg.get("exclude_prefixes", []),
+            exclude_prefixes=exclude_prefixes,
         )
         if reporting_enabled:
             artifact_groups.setdefault("weights", []).extend(state_dict_paths.values())
