@@ -1,0 +1,8 @@
+defaults:
+  - image_classification
+  - _self_
+
+transforms:
+  train:
+    policy:
+      _target_: torchvision.transforms.v2.TrivialAugmentWide
