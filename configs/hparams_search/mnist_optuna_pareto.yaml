@@ -31,7 +31,6 @@ hydra:
     sampler:
       _target_: optuna.samplers.NSGAIISampler
       seed: 1234
-      population_size: 10
 
     params:
       model.optimizer.lr: tag(log, interval(0.0001, 0.1))
