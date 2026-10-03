@@ -1,0 +1,43 @@
+_target_: src.models.distillation_module.DistillationClassificationLitModule
+
+num_classes: 2
+
+optimizer:
+  _target_: torch.optim.AdamW
+  _partial_: true
+  lr: 0.0003
+  weight_decay: 0.01
+
+scheduler:
+  _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+  _partial_: true
+  mode: min
+  factor: 0.5
+  patience: 3
+
+loss:
+  _target_: torch.nn.CrossEntropyLoss
+  label_smoothing: 0.0
+
+net:
+  _target_: src.models.components.adapters.TorchvisionClassifier
+  model_name: resnet18
+  num_classes: ${model.num_classes}
+  weights: null
+
+teacher:
+  _target_: src.models.components.adapters.TorchvisionClassifier
+  model_name: resnet18
+  num_classes: ${model.num_classes}
+  weights: null
+
+alpha: 0.5
+temperature: 4.0
+teacher_checkpoint: ???
+teacher_strip_prefix: "net."
+teacher_ignore_shape_mismatch: false
+
+compile: false
+pretrained_checkpoint: null
+pretrained_strip_prefix: ""
+pretrained_ignore_shape_mismatch: false
