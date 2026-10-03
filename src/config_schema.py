@@ -21,6 +21,7 @@ class TrainConfig:
     ckpt_path: str | None = None
     seed: int | None = None
     optimized_metric: str | None = None
+    optimized_metrics: list[str] = field(default_factory=list)
 
     data: Any = MISSING
     model: Any = MISSING
