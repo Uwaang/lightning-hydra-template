@@ -1,5 +1,5 @@
 import warnings
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from typing import Any
 
 from omegaconf import DictConfig
@@ -87,6 +87,15 @@ def task_wrapper(task_func: Callable) -> Callable:
     return wrap
 
 
+def _metric_to_float(value: Any, metric_name: str) -> float:
+    if hasattr(value, "item"):
+        value = value.item()
+    try:
+        return float(value)
+    except (TypeError, ValueError) as exc:
+        raise TypeError(f"Metric {metric_name!r} is not a scalar numeric value.") from exc
+
+
 def get_metric_value(metric_dict: dict[str, Any], metric_name: str | None) -> float | None:
     """Safely retrieves value of the metric logged in LightningModule.
 
@@ -105,7 +114,24 @@ def get_metric_value(metric_dict: dict[str, Any], metric_name: str | None) -> fl
             "Make sure `optimized_metric` name in `hparams_search` config is correct!"
         )
 
-    metric_value = metric_dict[metric_name].item()
+    metric_value = _metric_to_float(metric_dict[metric_name], metric_name)
     log.info(f"Retrieved metric value! <{metric_name}={metric_value}>")
 
     return metric_value
+
+
+def get_metric_values(
+    metric_dict: dict[str, Any],
+    metric_names: Sequence[str],
+) -> tuple[float, ...]:
+    """Retrieve multiple scalar metrics in a stable order for multi-objective optimization."""
+    if not metric_names:
+        raise ValueError("At least one optimized metric is required.")
+
+    values: list[float] = []
+    for metric_name in metric_names:
+        metric_value = get_metric_value(metric_dict, metric_name)
+        if metric_value is None:
+            raise RuntimeError(f"Metric retrieval unexpectedly returned None for {metric_name!r}.")
+        values.append(metric_value)
+    return tuple(values)
