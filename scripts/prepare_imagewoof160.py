@@ -41,7 +41,7 @@ def prepare(source: Path, seed: int) -> None:
         )
 
         candidates = _images(official_val_root / class_name)
-        rng = random.Random(seed + label)
+        rng = random.Random(seed + label)  # nosec B311 - deterministic dataset split
         rng.shuffle(candidates)
         split = len(candidates) // 2
         val_records.extend(_record(path, source, label) for path in candidates[:split])
