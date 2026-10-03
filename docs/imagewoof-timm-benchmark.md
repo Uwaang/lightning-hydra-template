@@ -74,22 +74,23 @@ ImageNet, such as Oxford-IIIT Pet.
 Compare `test/acc`, `val/acc_best`, wall-clock training time, peak GPU memory, parameter count,
 and MACs/FLOPs. Run one seed first. Only rerun the closest top recipes with multiple seeds if the
 single-seed result is ambiguous.
+
 ## First GTX 1660 result (seed 12345)
 
 The primary top-1 column is ordinary sample accuracy from the generated classification report.
 `test/acc` is also shown because the Lightning metric is TorchMetrics `MulticlassAccuracy`
 with its default macro averaging.
 
-| Recipe | Top-1 test | Macro test | Best macro val | Wall time |
-| --- | ---: | ---: | ---: | ---: |
-| Scratch | 40.93% | 40.92% | 43.75% | 236.8 s |
-| Pretrained full fine-tune | 84.39% | 83.58% | 83.81% | 206.8 s |
-| Freeze 2 epochs then unfreeze | 84.34% | 83.60% | 83.78% | 208.7 s |
-| Pretrained + EMA | 83.68% | 82.95% | 82.89% | 253.9 s |
-| Pretrained + label smoothing 0.1 | 85.31% | 84.57% | 84.81% | 219.4 s |
-| Pretrained + KD | **87.19%** | **86.41%** | **87.76%** | 419.4 s |
-| Pretrained + KD + label smoothing | **87.19%** | 86.38% | 87.04% | 417.7 s |
-| ResNet-18 teacher | 89.83% | 89.04% | 88.88% | 897.6 s |
+| Recipe                            | Top-1 test | Macro test | Best macro val | Wall time |
+| --------------------------------- | ---------: | ---------: | -------------: | --------: |
+| Scratch                           |     40.93% |     40.92% |         43.75% |   236.8 s |
+| Pretrained full fine-tune         |     84.39% |     83.58% |         83.81% |   206.8 s |
+| Freeze 2 epochs then unfreeze     |     84.34% |     83.60% |         83.78% |   208.7 s |
+| Pretrained + EMA                  |     83.68% |     82.95% |         82.89% |   253.9 s |
+| Pretrained + label smoothing 0.1  |     85.31% |     84.57% |         84.81% |   219.4 s |
+| Pretrained + KD                   | **87.19%** | **86.41%** |     **87.76%** |   419.4 s |
+| Pretrained + KD + label smoothing | **87.19%** |     86.38% |         87.04% |   417.7 s |
+| ResNet-18 teacher                 |     89.83% |     89.04% |         88.88% |   897.6 s |
 
 Relative to pretrained full fine-tuning, KD improved ordinary top-1 by 2.80 percentage
 points and macro accuracy by 2.83 points. Label smoothing improved ordinary top-1 by
