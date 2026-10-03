@@ -94,6 +94,7 @@ remain flexible `_target_`-driven configs.
 Current experiment examples include:
 
 - generic image classification;
+- pretrained image-classification fine-tuning with staged backbone unfreezing and optional EMA;
 - CIFAR-10 ResNet-18 validation with bounded qualitative image diagnostics;
 - shared-backbone multi-task classification with `CombinedLoader`;
 - ReID embeddings with GeM and angular-margin objectives;
@@ -108,6 +109,7 @@ The integrated optional CV stack includes:
 
 - manifest-driven labeled and unlabeled image datasets;
 - Pillow/OpenCV decoding, torchvision transforms v2, and optional MixUp/CutMix batch augmentation;
+- label smoothing plus opt-in EMA and pretrained backbone fine-tuning recipes;
 - process-aware HDF5 image storage;
 - torchvision and timm classifier/backbone adapters;
 - segmentation-models-pytorch integration;
@@ -120,7 +122,8 @@ The integrated optional CV stack includes:
 
 See the focused documentation under `docs/` for component details, including
 [`docs/model-profiling.md`](docs/model-profiling.md) for Params/MAC/FLOP/size profiling and
-Pareto analysis.
+Pareto analysis, and [`docs/training-recipes.md`](docs/training-recipes.md) for label smoothing,
+EMA, pretrained initialization, and staged fine-tuning.
 
 ## PyTorch and ONNX export
 
@@ -233,6 +236,7 @@ environments, and dependency/Docker changes trigger a CUDA-image smoke build.
 configs/       Hydra config groups and experiment recipes
 docs/          focused feature and provenance documentation
 scripts/       utility scripts
+src/callbacks/ training recipe and fine-tuning callbacks
 src/data/      datasets and Lightning data modules
 src/models/    plain PyTorch components and Lightning task modules
 src/utils/     logging, reproducibility, saving, and export utilities
