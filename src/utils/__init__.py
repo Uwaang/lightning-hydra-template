@@ -25,6 +25,13 @@ from src.utils.mlflow_utils import (
     publish_mlflow_artifacts,
 )
 from src.utils.monitoring_utils import ResearchMonitorCallback, collect_system_metrics
+from src.utils.model_profiling import (
+    ModelComplexityReport,
+    ParetoObjective,
+    pareto_front,
+    profile_model_complexity,
+    save_model_complexity_report,
+)
 from src.utils.provenance_utils import build_dataset_provenance, save_dataset_provenance
 from src.utils.pylogger import RankedLogger
 from src.utils.qat_utils import (
