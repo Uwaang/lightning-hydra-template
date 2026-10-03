@@ -9,6 +9,8 @@ from torch import nn
 from torchmetrics import MaxMetric, MeanMetric
 from torchmetrics.classification import MulticlassAccuracy
 
+from src.utils.saving_utils import load_module_weights
+
 
 class ClassificationLitModule(LightningModule):
     """Generic multiclass classification module for image models."""
@@ -21,6 +23,9 @@ class ClassificationLitModule(LightningModule):
         loss: nn.Module,
         num_classes: int,
         compile: bool = False,
+        pretrained_checkpoint: str | None = None,
+        pretrained_strip_prefix: str = "",
+        pretrained_ignore_shape_mismatch: bool = False,
     ) -> None:
         super().__init__()
         if num_classes < 2:
@@ -31,6 +36,14 @@ class ClassificationLitModule(LightningModule):
             ignore=["net", "optimizer", "scheduler", "loss"],
         )
         self.net = net
+        if pretrained_checkpoint is not None:
+            load_module_weights(
+                self.net,
+                pretrained_checkpoint,
+                strip_prefix=pretrained_strip_prefix,
+                ignore_shape_mismatch=pretrained_ignore_shape_mismatch,
+            )
+
         self.optimizer_factory = optimizer
         self.scheduler_factory = scheduler
         self.criterion = loss
@@ -130,7 +143,10 @@ class ClassificationLitModule(LightningModule):
             self.net = torch.compile(self.net)
 
     def configure_optimizers(self) -> dict[str, Any]:
-        optimizer = self.optimizer_factory(params=self.parameters())
+        trainable_parameters = [parameter for parameter in self.parameters() if parameter.requires_grad]
+        if not trainable_parameters:
+            raise RuntimeError("No trainable parameters are available for the optimizer.")
+        optimizer = self.optimizer_factory(params=trainable_parameters)
         if self.scheduler_factory is None:
             return {"optimizer": optimizer}
 
