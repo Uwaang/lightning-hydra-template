@@ -8,6 +8,7 @@ from hydra import compose, initialize
         ("example", "val/acc"),
         ("cifar10", "val/acc"),
         ("image_classification", "val/acc"),
+        ("image_classification_finetune", "val/acc"),
         ("image_multitask", "val/acc"),
         ("image_reid", "val/acc"),
         ("image_vicreg", "val/loss"),

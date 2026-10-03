@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
 from typing import Any
 
 import torch
@@ -30,6 +31,31 @@ def _replace_last_linear(module: nn.Module, num_classes: int | None) -> int:
             continue
 
     raise ValueError("No Linear layer was found in the classifier container.")
+
+
+def _torchvision_classifier_head(model: nn.Module) -> nn.Module:
+    for attribute in _HEAD_ATTRIBUTES:
+        head = getattr(model, attribute, None)
+        if isinstance(head, nn.Module):
+            return head
+    raise ValueError(
+        f"Unsupported torchvision classifier layout for {model.__class__.__name__}. "
+        f"Expected one of {_HEAD_ATTRIBUTES} to contain the classifier head."
+    )
+
+
+def _backbone_parameters(model: nn.Module, head: nn.Module) -> Iterator[nn.Parameter]:
+    head_parameter_ids = {id(parameter) for parameter in head.parameters()}
+    return (
+        parameter for parameter in model.parameters() if id(parameter) not in head_parameter_ids
+    )
+
+
+def _set_backbone_trainable(model: nn.Module, head: nn.Module, trainable: bool) -> None:
+    for parameter in _backbone_parameters(model, head):
+        parameter.requires_grad_(trainable)
+    for parameter in head.parameters():
+        parameter.requires_grad_(True)
 
 
 def replace_torchvision_classifier(
@@ -79,6 +105,23 @@ class TorchvisionClassifier(nn.Module):
         self.num_features = replace_torchvision_classifier(self.model, num_classes)
         self.num_classes = num_classes
 
+    @property
+    def classifier_head(self) -> nn.Module:
+        """Return the task-specific head without registering a duplicate module reference."""
+        return _torchvision_classifier_head(self.model)
+
+    def head_parameters(self) -> Iterator[nn.Parameter]:
+        """Return parameters belonging to the classification head."""
+        return iter(self.classifier_head.parameters())
+
+    def backbone_parameters(self) -> Iterator[nn.Parameter]:
+        """Return model parameters excluding the classification head."""
+        return _backbone_parameters(self.model, self.classifier_head)
+
+    def set_backbone_trainable(self, trainable: bool) -> None:
+        """Freeze or unfreeze backbone parameters while always keeping the head trainable."""
+        _set_backbone_trainable(self.model, self.classifier_head, trainable)
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         output = self.model(x)
         if self.num_classes == 1 and output.ndim > 1:
@@ -124,6 +167,26 @@ class TimmClassifier(nn.Module):
         )
         self.num_features = int(self.model.num_features)
         self.num_classes = num_classes
+
+    @property
+    def classifier_head(self) -> nn.Module:
+        """Return timm's task-specific classifier module."""
+        head = self.model.get_classifier()
+        if not isinstance(head, nn.Module):
+            raise TypeError("timm get_classifier() did not return an nn.Module.")
+        return head
+
+    def head_parameters(self) -> Iterator[nn.Parameter]:
+        """Return parameters belonging to the classification head."""
+        return iter(self.classifier_head.parameters())
+
+    def backbone_parameters(self) -> Iterator[nn.Parameter]:
+        """Return model parameters excluding the classification head."""
+        return _backbone_parameters(self.model, self.classifier_head)
+
+    def set_backbone_trainable(self, trainable: bool) -> None:
+        """Freeze or unfreeze backbone parameters while always keeping the head trainable."""
+        _set_backbone_trainable(self.model, self.classifier_head, trainable)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         output = self.model(x)
