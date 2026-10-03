@@ -4,6 +4,7 @@ import csv
 import json
 from collections import OrderedDict
 from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -13,6 +14,16 @@ from lightning import LightningModule, Trainer
 from src.utils.pylogger import RankedLogger
 
 log = RankedLogger(__name__, rank_zero_only=True)
+
+
+@dataclass(frozen=True)
+class WeightLoadReport:
+    """Summary of a safe module weight-loading operation."""
+
+    loaded_keys: tuple[str, ...]
+    missing_keys: tuple[str, ...]
+    unexpected_keys: tuple[str, ...]
+    skipped_shape_mismatch: tuple[str, ...]
 
 
 def process_state_dict(
@@ -41,6 +52,60 @@ def _load_checkpoint_state_dict(path: str | Path) -> Mapping[str, Any]:
     if not isinstance(checkpoint, Mapping) or "state_dict" not in checkpoint:
         raise ValueError(f"Checkpoint does not contain a Lightning state_dict: {path}")
     return checkpoint["state_dict"]
+
+
+def load_module_weights(
+    module: torch.nn.Module,
+    path: str | Path,
+    *,
+    strip_prefix: str = "",
+    strict: bool = False,
+    ignore_shape_mismatch: bool = False,
+) -> WeightLoadReport:
+    """Load a plain state dict or Lightning checkpoint using safe weights-only deserialization."""
+    if strict and ignore_shape_mismatch:
+        raise ValueError("strict=True cannot be combined with ignore_shape_mismatch=True.")
+
+    payload = torch.load(Path(path), map_location="cpu", weights_only=True)
+    if not isinstance(payload, Mapping):
+        raise ValueError(f"Weights file does not contain a mapping: {path}")
+
+    raw_state: Mapping[str, Any]
+    if "state_dict" in payload:
+        state_dict = payload["state_dict"]
+        if not isinstance(state_dict, Mapping):
+            raise ValueError(f"Checkpoint state_dict is not a mapping: {path}")
+        raw_state = state_dict
+    else:
+        raw_state = payload
+
+    processed = process_state_dict(raw_state, strip_prefix=strip_prefix)
+    current_state = module.state_dict()
+    skipped_shape_mismatch: list[str] = []
+    filtered: OrderedDict[str, Any] = OrderedDict()
+
+    for key, value in processed.items():
+        current_value = current_state.get(key)
+        has_shape_mismatch = (
+            isinstance(value, torch.Tensor)
+            and isinstance(current_value, torch.Tensor)
+            and value.shape != current_value.shape
+        )
+        if has_shape_mismatch and ignore_shape_mismatch:
+            skipped_shape_mismatch.append(key)
+            continue
+        filtered[key] = value
+
+    incompatible = module.load_state_dict(filtered, strict=strict)
+    unexpected = tuple(incompatible.unexpected_keys)
+    loaded = tuple(key for key in filtered if key not in unexpected)
+
+    return WeightLoadReport(
+        loaded_keys=loaded,
+        missing_keys=tuple(incompatible.missing_keys),
+        unexpected_keys=unexpected,
+        skipped_shape_mismatch=tuple(skipped_shape_mismatch),
+    )
 
 
 def save_state_dicts(
