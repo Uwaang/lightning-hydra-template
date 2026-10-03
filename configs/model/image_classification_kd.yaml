@@ -1,0 +1,39 @@
+_target_: src.models.classification_module.ClassificationLitModule
+
+num_classes: 2
+
+optimizer:
+  _target_: torch.optim.AdamW
+  _partial_: true
+  lr: 0.0003
+  weight_decay: 0.01
+
+scheduler:
+  _target_: torch.optim.lr_scheduler.ReduceLROnPlateau
+  _partial_: true
+  mode: min
+  factor: 0.5
+  patience: 3
+
+loss:
+  _target_: torch.nn.CrossEntropyLoss
+  label_smoothing: 0.0
+
+net:
+  _target_: src.models.components.adapters.TorchvisionClassifier
+  model_name: resnet18
+  num_classes: ${model.num_classes}
+  weights: null
+
+teacher:
+  _target_: src.models.components.adapters.TorchvisionClassifier
+  model_name: resnet50
+  num_classes: ${model.num_classes}
+  weights: null
+
+# Plain teacher network state dict, e.g. best_state_dict.pt from a prior teacher run.
+teacher_state_dict_path: ???
+distillation_alpha: 0.5
+distillation_temperature: 4.0
+
+compile: false
