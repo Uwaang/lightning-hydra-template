@@ -107,7 +107,7 @@ with `torch.compile` rather than compiling the whole Lightning module.
 The integrated optional CV stack includes:
 
 - manifest-driven labeled and unlabeled image datasets;
-- Pillow/OpenCV decoding, torchvision transforms v2, and optional MixUp/CutMix batch augmentation;
+- Pillow/OpenCV decoding, torchvision transforms v2, augmentation-policy presets, and optional MixUp/CutMix batch augmentation;
 - process-aware HDF5 image storage;
 - torchvision and timm classifier/backbone adapters;
 - segmentation-models-pytorch integration;
@@ -116,9 +116,11 @@ The integrated optional CV stack includes:
 - bounded train/validation/error-gallery image diagnostics;
 - JSON/CSV prediction export;
 - plain state-dict export and run metadata snapshots;
+- optional label smoothing, EMA, pretrained/fine-tuning recipes;
 - dependency-free model complexity reports and Pareto-front analysis.
 
 See the focused documentation under `docs/` for component details, including
+[`docs/training-recipes.md`](docs/training-recipes.md) for EMA/pretraining/fine-tuning recipes and
 [`docs/model-profiling.md`](docs/model-profiling.md) for Params/MAC/FLOP/size profiling and
 Pareto analysis.
 
