@@ -80,7 +80,9 @@ def train(cfg: DictConfig) -> tuple[dict[str, Any], dict[str, Any]]:
     model: LightningModule = hydra.utils.instantiate(cfg.model)
     optimization_target = getattr(model, "net", model)
     optimization_metrics = {
-        "model/params": float(sum(parameter.numel() for parameter in optimization_target.parameters()))
+        "model/params": float(
+            sum(parameter.numel() for parameter in optimization_target.parameters())
+        )
     }
 
     log.info("Instantiating callbacks...")
