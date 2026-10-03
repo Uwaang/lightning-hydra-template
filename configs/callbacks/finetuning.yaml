@@ -1,0 +1,14 @@
+defaults:
+  - default
+  - _self_
+
+finetuning:
+  _target_: src.utils.finetuning_utils.ParameterPatternFinetuning
+  trainable_patterns:
+    - net.model.fc.*
+    - net.model.classifier.*
+    - net.model.head.*
+    - net.model.heads.*
+  unfreeze_at_epoch: 1
+  initial_denom_lr: 10.0
+  train_bn: True
