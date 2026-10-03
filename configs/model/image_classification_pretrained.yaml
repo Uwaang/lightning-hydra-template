@@ -1,0 +1,6 @@
+defaults:
+  - image_classification
+  - _self_
+
+net:
+  weights: DEFAULT
