@@ -127,7 +127,9 @@ class ClassificationLitModule(LightningModule):
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         x, targets, metric_targets = self._unpack_batch(batch)
         logits = self.forward(x)
-        loss = self._training_loss(x, logits, targets) if distill else self.criterion(logits, targets)
+        loss = (
+            self._training_loss(x, logits, targets) if distill else self.criterion(logits, targets)
+        )
         preds = torch.argmax(logits, dim=1)
         return loss, logits, preds, metric_targets
 
