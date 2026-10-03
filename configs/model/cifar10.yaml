@@ -16,6 +16,7 @@ scheduler:
 
 loss:
   _target_: torch.nn.CrossEntropyLoss
+  label_smoothing: 0.0
 
 net:
   _target_: src.models.components.adapters.TorchvisionClassifier
@@ -24,3 +25,6 @@ net:
   weights: null
 
 compile: false
+pretrained_checkpoint: null
+pretrained_strip_prefix: ""
+pretrained_ignore_shape_mismatch: false
