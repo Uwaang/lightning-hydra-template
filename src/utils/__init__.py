@@ -24,6 +24,13 @@ from src.utils.mlflow_utils import (
     log_prediction_table_to_mlflow,
     publish_mlflow_artifacts,
 )
+from src.utils.model_profiling import (
+    ModelComplexityReport,
+    ParetoObjective,
+    pareto_front,
+    profile_model_complexity,
+    save_model_complexity_report,
+)
 from src.utils.monitoring_utils import ResearchMonitorCallback, collect_system_metrics
 from src.utils.provenance_utils import build_dataset_provenance, save_dataset_provenance
 from src.utils.pylogger import RankedLogger

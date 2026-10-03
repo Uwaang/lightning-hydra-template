@@ -115,9 +115,12 @@ The integrated optional CV stack includes:
 - Grad-CAM tooling;
 - bounded train/validation/error-gallery image diagnostics;
 - JSON/CSV prediction export;
-- plain state-dict export and run metadata snapshots.
+- plain state-dict export and run metadata snapshots;
+- dependency-free model complexity reports and Pareto-front analysis.
 
-See the focused documentation under `docs/` for component details.
+See the focused documentation under `docs/` for component details, including
+[`docs/model-profiling.md`](docs/model-profiling.md) for Params/MAC/FLOP/size profiling and
+Pareto analysis.
 
 ## PyTorch and ONNX export
 
