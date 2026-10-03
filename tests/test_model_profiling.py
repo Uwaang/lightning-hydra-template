@@ -91,3 +91,7 @@ def test_pareto_front_rejects_missing_metric() -> None:
             [{"accuracy": 1.0}, {"accuracy": 0.9, "params": 2}],
             [ParetoObjective("params", "min")],
         )
+
+def test_pareto_objective_rejects_invalid_direction() -> None:
+    with pytest.raises(ValueError, match="direction"):
+        ParetoObjective("accuracy", "sideways")  # type: ignore[arg-type]
