@@ -99,9 +99,11 @@ with KD did not improve ordinary top-1 beyond KD alone and slightly reduced macr
 
 These are single-seed engineering results, not statistically robust model rankings.
 
-At 160 x 160, the profiler reports 1,528,106 parameters and 28.83M counted MACs for the
-MobileNetV3-small student, versus 11,181,642 parameters and 925.29M counted MACs for the
-ResNet-18 teacher. The profiler counts Conv/Linear MACs and therefore should be interpreted
-using its documented coverage rather than as a complete operator-level FLOP benchmark.
+At 160 x 160, the profiler reports 1,528,106 parameters, 28.83M counted MACs,
+57.67M counted FLOPs, and about 8.19 MiB incremental peak CUDA allocation for the
+MobileNetV3-small student. The ResNet-18 teacher reports 11,181,642 parameters,
+925.29M counted MACs, 1.85B counted FLOPs, and about 26.24 MiB incremental peak CUDA allocation.
+The profiler counts Conv/Linear MACs and therefore should be interpreted using its documented
+coverage rather than as a complete operator-level FLOP benchmark.
 
 MLflow experiment: `imagewoof-timm-benchmark`.
