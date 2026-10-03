@@ -15,17 +15,17 @@ class TorchvisionV2Transform:
         self,
         operations: Sequence[Any],
         *,
+        policy: Any | None = None,
         mean: Sequence[float] | None = None,
         std: Sequence[float] | None = None,
     ) -> None:
         if (mean is None) != (std is None):
             raise ValueError("mean and std must be provided together.")
 
-        pipeline: list[Any] = [
-            v2.ToImage(),
-            *operations,
-            v2.ToDtype(torch.float32, scale=True),
-        ]
+        pipeline: list[Any] = [v2.ToImage(), *operations]
+        if policy is not None:
+            pipeline.append(policy)
+        pipeline.append(v2.ToDtype(torch.float32, scale=True))
         if mean is not None and std is not None:
             pipeline.append(v2.Normalize(mean=list(mean), std=list(std)))
         self.transform = v2.Compose(pipeline)
