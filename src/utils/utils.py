@@ -87,25 +87,40 @@ def task_wrapper(task_func: Callable) -> Callable:
     return wrap
 
 
-def get_metric_value(metric_dict: dict[str, Any], metric_name: str | None) -> float | None:
-    """Safely retrieves value of the metric logged in LightningModule.
-
-    :param metric_dict: A dict containing metric values.
-    :param metric_name: If provided, the name of the metric to retrieve.
-    :return: If a metric name was provided, the value of the metric.
-    """
-    if not metric_name:
-        log.info("Metric name is None! Skipping metric value retrieval...")
-        return None
-
+def _metric_as_float(metric_dict: dict[str, Any], metric_name: str) -> float:
     if metric_name not in metric_dict:
         raise Exception(
             f"Metric value not found! <metric_name={metric_name}>\n"
-            "Make sure metric name logged in LightningModule is correct!\n"
-            "Make sure `optimized_metric` name in `hparams_search` config is correct!"
+            "Make sure the metric name logged by the task is correct and the HPO config "
+            "references the same key."
         )
 
-    metric_value = metric_dict[metric_name].item()
-    log.info(f"Retrieved metric value! <{metric_name}={metric_value}>")
+    raw_value = metric_dict[metric_name]
+    if hasattr(raw_value, "item"):
+        raw_value = raw_value.item()
+    try:
+        metric_value = float(raw_value)
+    except (TypeError, ValueError) as exc:
+        raise TypeError(f"Metric {metric_name!r} is not scalar-convertible: {raw_value!r}") from exc
 
+    log.info(f"Retrieved metric value! <{metric_name}={metric_value}>")
     return metric_value
+
+
+def get_metric_value(metric_dict: dict[str, Any], metric_name: str | None) -> float | None:
+    """Safely retrieve one scalar metric for single-objective optimization."""
+    if not metric_name:
+        log.info("Metric name is None! Skipping metric value retrieval...")
+        return None
+    return _metric_as_float(metric_dict, metric_name)
+
+
+def get_metric_values(
+    metric_dict: dict[str, Any],
+    metric_names: list[str] | tuple[str, ...] | None,
+) -> tuple[float, ...] | None:
+    """Safely retrieve ordered scalar metrics for multi-objective optimization."""
+    if not metric_names:
+        log.info("Metric names are empty! Skipping multi-objective metric retrieval...")
+        return None
+    return tuple(_metric_as_float(metric_dict, name) for name in metric_names)
