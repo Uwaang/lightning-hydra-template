@@ -11,8 +11,8 @@ class ParameterPatternFinetuning(BaseFinetuning):
     """Freeze everything except matching parameters, then unfreeze the rest later.
 
     Parameter names are matched with ``fnmatch`` patterns against
-    ``LightningModule.named_parameters()``. This avoids requiring a specific
-    ``backbone``/``head`` attribute layout from custom, torchvision, or timm models.
+    ``LightningModule.named_parameters()``. This avoids requiring a specific ``backbone``/``head``
+    attribute layout from custom, torchvision, or timm models.
     """
 
     def __init__(
