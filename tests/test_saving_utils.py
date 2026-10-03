@@ -3,9 +3,11 @@ from collections import OrderedDict
 from pathlib import Path
 
 import torch
+from torch import nn
 
 from src.utils.saving_utils import (
     _load_checkpoint_state_dict,
+    load_module_weights,
     process_state_dict,
     save_predictions,
 )
@@ -38,6 +40,44 @@ def test_load_checkpoint_state_dict_uses_safe_weights_only(tmp_path: Path) -> No
 
     assert list(loaded) == ["net.weight"]
     assert torch.equal(loaded["net.weight"], state["net.weight"])
+
+
+
+def test_load_module_weights_skips_changed_head_shape(tmp_path: Path) -> None:
+    source = nn.Sequential(nn.Linear(4, 3), nn.Linear(3, 2))
+    target = nn.Sequential(nn.Linear(4, 3), nn.Linear(3, 4))
+    state = OrderedDict((f"net.{key}", value) for key, value in source.state_dict().items())
+    path = tmp_path / "pretrained.pt"
+    torch.save(state, path)
+
+    report = load_module_weights(
+        target,
+        path,
+        strip_prefix="net.",
+        ignore_shape_mismatch=True,
+    )
+
+    assert "0.weight" in report.loaded_keys
+    assert set(report.skipped_shape_mismatch) == {"1.weight", "1.bias"}
+    assert torch.equal(target[0].weight, source[0].weight)
+    assert torch.equal(target[0].bias, source[0].bias)
+
+
+def test_load_module_weights_accepts_lightning_checkpoint(tmp_path: Path) -> None:
+    source = nn.Linear(4, 2)
+    target = nn.Linear(4, 2)
+    path = tmp_path / "model.ckpt"
+    torch.save(
+        {"state_dict": OrderedDict((f"net.{key}", value) for key, value in source.state_dict().items())},
+        path,
+    )
+
+    report = load_module_weights(target, path, strip_prefix="net.")
+
+    assert not report.missing_keys
+    assert not report.unexpected_keys
+    assert torch.equal(target.weight, source.weight)
+    assert torch.equal(target.bias, source.bias)
 
 
 def test_save_predictions_json(tmp_path: Path) -> None:
