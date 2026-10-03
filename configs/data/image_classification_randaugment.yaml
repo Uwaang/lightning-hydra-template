@@ -1,0 +1,10 @@
+defaults:
+  - image_classification
+  - _self_
+
+transforms:
+  train:
+    policy:
+      _target_: torchvision.transforms.v2.RandAugment
+      num_ops: 2
+      magnitude: 9
