@@ -16,6 +16,24 @@ def test_torchvision_classifier() -> None:
     assert model.num_features == 512
 
 
+def test_torchvision_classifier_can_freeze_backbone_only() -> None:
+    model = TorchvisionClassifier(
+        model_name="resnet18",
+        num_classes=3,
+        weights=None,
+    )
+
+    model.set_backbone_trainable(False)
+
+    assert all(not parameter.requires_grad for parameter in model.backbone_parameters())
+    assert all(parameter.requires_grad for parameter in model.head_parameters())
+
+    model.set_backbone_trainable(True)
+
+    assert all(parameter.requires_grad for parameter in model.backbone_parameters())
+    assert all(parameter.requires_grad for parameter in model.head_parameters())
+
+
 def test_torchvision_backbone() -> None:
     model = TorchvisionBackbone(model_name="resnet18", weights=None)
     output = model(torch.randn(2, 3, 64, 64))
@@ -36,6 +54,26 @@ def test_timm_classifier() -> None:
     output = model(torch.randn(2, 3, 64, 64))
 
     assert output.shape == (2, 4)
+
+
+def test_timm_classifier_can_freeze_backbone_only() -> None:
+    pytest.importorskip("timm")
+    from src.models.components.adapters import TimmClassifier
+
+    model = TimmClassifier(
+        model_name="resnet18",
+        num_classes=4,
+        pretrained=False,
+    )
+
+    model.set_backbone_trainable(False)
+
+    assert all(not parameter.requires_grad for parameter in model.backbone_parameters())
+    assert all(parameter.requires_grad for parameter in model.head_parameters())
+
+    model.set_backbone_trainable(True)
+
+    assert all(parameter.requires_grad for parameter in model.backbone_parameters())
 
 
 def test_segmentation_model() -> None:
