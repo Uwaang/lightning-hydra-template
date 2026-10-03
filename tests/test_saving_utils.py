@@ -42,7 +42,6 @@ def test_load_checkpoint_state_dict_uses_safe_weights_only(tmp_path: Path) -> No
     assert torch.equal(loaded["net.weight"], state["net.weight"])
 
 
-
 def test_load_module_weights_skips_changed_head_shape(tmp_path: Path) -> None:
     source = nn.Sequential(nn.Linear(4, 3), nn.Linear(3, 2))
     target = nn.Sequential(nn.Linear(4, 3), nn.Linear(3, 4))
@@ -68,7 +67,11 @@ def test_load_module_weights_accepts_lightning_checkpoint(tmp_path: Path) -> Non
     target = nn.Linear(4, 2)
     path = tmp_path / "model.ckpt"
     torch.save(
-        {"state_dict": OrderedDict((f"net.{key}", value) for key, value in source.state_dict().items())},
+        {
+            "state_dict": OrderedDict(
+                (f"net.{key}", value) for key, value in source.state_dict().items()
+            )
+        },
         path,
     )
 
