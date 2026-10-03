@@ -162,9 +162,7 @@ def test_distillation_optimizer_excludes_teacher_parameters() -> None:
 
     optimizer = module.configure_optimizers()["optimizer"]
     optimized_ids = {
-        id(parameter)
-        for group in optimizer.param_groups
-        for parameter in group["params"]
+        id(parameter) for group in optimizer.param_groups for parameter in group["params"]
     }
     teacher_ids = {id(parameter) for parameter in teacher.parameters()}
     student_ids = {id(parameter) for parameter in module.net.parameters()}
