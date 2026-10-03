@@ -5,6 +5,7 @@
 
 defaults:
   - override /hydra/sweeper: optuna
+  - override /hydra/sweeper/sampler: nsgaii
 
 optimized_metric: null
 optimized_metrics:
@@ -29,7 +30,6 @@ hydra:
     n_trials: 20
 
     sampler:
-      _target_: optuna.samplers.NSGAIISampler
       seed: 1234
 
     params:
