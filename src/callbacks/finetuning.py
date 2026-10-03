@@ -8,10 +8,10 @@ from lightning import Callback, LightningModule, Trainer
 class BackboneUnfreezingCallback(Callback):
     """Freeze a classifier backbone first, then unfreeze it at a chosen epoch.
 
-    The wrapped network must expose ``set_backbone_trainable(bool)``. Optimizers in this
-    template are constructed from all module parameters, so no optimizer param group needs to
-    be added when the backbone is unfrozen; frozen parameters simply have no gradients until
-    their ``requires_grad`` flag is restored.
+    The wrapped network must expose ``set_backbone_trainable(bool)``. Optimizers in this template
+    are constructed from all module parameters, so no optimizer param group needs to be added when
+    the backbone is unfrozen; frozen parameters simply have no gradients until their
+    ``requires_grad`` flag is restored.
     """
 
     def __init__(self, unfreeze_at_epoch: int = 1) -> None:
