@@ -79,6 +79,7 @@ def test_classification_label_smoothing_defaults_off() -> None:
 
 
 def test_multi_objective_optuna_config_composes() -> None:
+    pytest.importorskip("hydra_plugins.hydra_optuna_sweeper")
     with initialize(version_base="1.3", config_path="../configs"):
         cfg = compose(
             config_name="train.yaml",
@@ -91,6 +92,7 @@ def test_multi_objective_optuna_config_composes() -> None:
 
 
 def test_image_classification_optuna_config_composes() -> None:
+    pytest.importorskip("hydra_plugins.hydra_optuna_sweeper")
     with initialize(version_base="1.3", config_path="../configs"):
         cfg = compose(
             config_name="train.yaml",
