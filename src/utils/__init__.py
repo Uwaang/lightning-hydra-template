@@ -10,6 +10,7 @@ from src.utils.benchmark_utils import (
     save_benchmark_report,
 )
 from src.utils.export_utils import export_onnx, export_pt2
+from src.utils.finetuning_utils import ParameterPatternFinetuning
 from src.utils.image_diagnostics import (
     ClassificationImageDiagnosticsCallback,
     save_classification_image_grid,
@@ -48,6 +49,8 @@ from src.utils.quantization_utils import (
 from src.utils.reporting_utils import ClassificationReport, save_classification_report
 from src.utils.rich_utils import enforce_tags, print_config_tree
 from src.utils.saving_utils import (
+    WeightLoadReport,
+    load_module_weights,
     prediction_rows,
     process_state_dict,
     save_predictions,
