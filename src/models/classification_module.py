@@ -143,7 +143,9 @@ class ClassificationLitModule(LightningModule):
             self.net = torch.compile(self.net)
 
     def configure_optimizers(self) -> dict[str, Any]:
-        trainable_parameters = [parameter for parameter in self.parameters() if parameter.requires_grad]
+        trainable_parameters = [
+            parameter for parameter in self.parameters() if parameter.requires_grad
+        ]
         if not trainable_parameters:
             raise RuntimeError("No trainable parameters are available for the optimizer.")
         optimizer = self.optimizer_factory(params=trainable_parameters)
